@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ordskogen 🌳</title>
+<title>Lärskogen 🌳</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -201,6 +201,8 @@ body{overflow-y:auto;}
   .ls-cards{gap:10px;padding:0 10px;}
   .lc{min-width:calc(33% - 10px);padding:12px 8px;border-radius:16px;}
   .lc .ico{font-size:28px;margin-bottom:4px;}
+  .lc .nm{font-size:16px;}
+  .lc .ico{font-size:32px;margin-bottom:5px;}
   .lc .nm{font-size:17px;}
   .lc .ds{font-size:10px;}
   .refresh-btn{font-size:15px;padding:9px 20px;margin-top:16px;}
@@ -261,10 +263,39 @@ body{overflow-y:auto;}
   .eng-word{font-size:36px;}
   .opt{font-size:16px;padding:13px 12px;}
   .ls-title{font-size:26px;}
-  .lc{min-width:calc(50% - 8px);padding:10px 6px;font-size:11px;}
+  .lc{min-width:calc(50% - 8px);padding:10px 6px;}
   .battle-scene{height:140px;}
   #enemyCanvas{width:76px;height:76px;bottom:40px;}
   #playerCanvas{width:90px;height:90px;bottom:12px;}
+}
+
+/* ── SUBJECT PICKER ── */
+.subj-screen{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,50,2,.65);backdrop-filter:blur(8px);animation:ovIn .4s ease;overflow-y:auto;padding:20px;}
+.subj-title{font-family:'Fredoka One',cursive;font-size:52px;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.25),0 0 30px rgba(100,255,60,.4);margin-bottom:6px;text-align:center;}
+.subj-sub{color:#c8ffb0;font-size:16px;font-weight:700;margin-bottom:36px;text-align:center;}
+.subj-cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;}
+.subj-card{background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.35);border-radius:28px;padding:32px 40px;cursor:pointer;transition:all .22s;text-align:center;min-width:170px;backdrop-filter:blur(8px);color:#fff;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.subj-card:hover,.subj-card:active{transform:translateY(-8px) scale(1.06);background:rgba(255,255,255,.28);}
+.subj-card .s-ico{font-size:56px;margin-bottom:12px;}
+.subj-card .s-nm{font-family:'Fredoka One',cursive;font-size:26px;margin-bottom:4px;}
+.subj-card .s-ds{font-size:13px;opacity:.8;font-weight:600;}
+.subj-card.eng{border-color:#6ee7b7;}.subj-card.eng:hover{box-shadow:0 10px 36px rgba(80,220,160,.45);}
+.subj-card.mat{border-color:#fbbf24;}.subj-card.mat:hover{box-shadow:0 10px 36px rgba(255,190,50,.45);}
+
+/* Matte word-card style — bigger question */
+.eng-word.math-q{font-size:38px;line-height:1.25;}
+
+@media(max-width:600px){
+  .subj-title{font-size:34px;}
+  .subj-sub{font-size:13px;margin-bottom:22px;}
+  .subj-cards{gap:14px;}
+  .subj-card{min-width:140px;padding:22px 24px;}
+  .subj-card .s-ico{font-size:42px;margin-bottom:8px;}
+  .subj-card .s-nm{font-size:22px;}
+}
+@media(max-width:380px){
+  .subj-card{min-width:120px;padding:16px 14px;}
+  .subj-title{font-size:28px;}
 }
 </style>
 </head>
@@ -295,21 +326,44 @@ body{overflow-y:auto;}
 
 <button class="snd-btn" id="sndBtn">🔊</button>
 
-<!-- LEVEL SELECT -->
-<div class="overlay" id="lvlScreen">
-  <div class="ls-title">🌳 Ordskogen 🌳</div>
-  <div class="ls-sub">Välj en nivå och börja öva engelska!</div>
-  <div class="ls-cards">
-    <div class="lc l1" onclick="startLevel(1)"><div class="ico">🌱</div><div class="nm">Åk 1</div><div class="ds">Enkla ord<br>Djur &amp; saker</div></div>
-    <div class="lc l2" onclick="startLevel(2)"><div class="ico">🐛</div><div class="nm">Åk 2</div><div class="ds">Vardagsord<br>Hem &amp; mat</div></div>
-    <div class="lc l3" onclick="startLevel(3)"><div class="ico">🦋</div><div class="nm">Åk 3</div><div class="ds">Fler ord<br>Kropp &amp; natur</div></div>
-    <div class="lc l4" onclick="startLevel(4)"><div class="ico">🦊</div><div class="nm">Åk 4</div><div class="ds">Adjektiv<br>&amp; verb</div></div>
-    <div class="lc l5" onclick="startLevel(5)"><div class="ico">🦅</div><div class="nm">Åk 5</div><div class="ds">Svårare ord<br>Egenskaper</div></div>
-    <div class="lc l6" onclick="startLevel(6)"><div class="ico">⚡</div><div class="nm" style="color:#e879f9">Åk 6</div><div class="ds" style="color:#d8b4fe">Avancerat<br>Fullständiga meningar</div></div>
+<!-- SUBJECT PICKER -->
+<div class="subj-screen" id="subjScreen">
+  <div class="subj-title">🌳 Lärskogen 🌳</div>
+  <div class="subj-sub">Vad vill du öva på idag?</div>
+  <div class="subj-cards">
+    <div class="subj-card eng" onclick="pickSubject('eng')">
+      <div class="s-ico">🇬🇧</div>
+      <div class="s-nm">Engelska</div>
+      <div class="s-ds">Lär dig engelska ord</div>
+    </div>
+    <div class="subj-card mat" onclick="pickSubject('mat')">
+      <div class="s-ico">🔢</div>
+      <div class="s-nm">Matematik</div>
+      <div class="s-ds">Öva matte-uppgifter</div>
+    </div>
   </div>
-  <button class="refresh-btn" id="refreshBtn" onclick="refreshAllWords()">
-    <span class="spin" id="refreshSpin">✨</span> Generera nya ord med AI!
-  </button>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="overlay" id="lvlScreen" style="display:none">
+  <div class="ls-title" id="lvlTitle">🇬🇧 Engelska</div>
+  <div class="ls-sub" id="lvlSub">Välj din årskurs!</div>
+  <div class="ls-cards" id="lvlCards">
+    <div class="lc l1" onclick="startLevel(1)"><div class="ico">🌱</div><div class="nm">Åk 1</div><div class="ds" id="ds1">Enkla ord<br>Djur &amp; saker</div></div>
+    <div class="lc l2" onclick="startLevel(2)"><div class="ico">🐛</div><div class="nm">Åk 2</div><div class="ds" id="ds2">Vardagsord<br>Hem &amp; mat</div></div>
+    <div class="lc l3" onclick="startLevel(3)"><div class="ico">🦋</div><div class="nm">Åk 3</div><div class="ds" id="ds3">Fler ord<br>Kropp &amp; natur</div></div>
+    <div class="lc l4" onclick="startLevel(4)"><div class="ico">🦊</div><div class="nm">Åk 4</div><div class="ds" id="ds4">Adjektiv<br>&amp; verb</div></div>
+    <div class="lc l5" onclick="startLevel(5)"><div class="ico">🦅</div><div class="nm">Åk 5</div><div class="ds" id="ds5">Svårare ord<br>Egenskaper</div></div>
+    <div class="lc l6" onclick="startLevel(6)"><div class="ico">⚡</div><div class="nm" style="color:#e879f9">Åk 6</div><div class="ds" id="ds6" style="color:#d8b4fe">Avancerat<br>Fullständigt</div></div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;justify-content:center;">
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshAllWords()" style="display:none">
+      <span class="spin" id="refreshSpin">✨</span> Generera nya ord med AI!
+    </button>
+    <button class="refresh-btn" onclick="goHome()" style="margin-top:0">
+      ← Tillbaka
+    </button>
+  </div>
 </div>
 
 <!-- Loading overlay -->
@@ -338,7 +392,7 @@ body{overflow-y:auto;}
         <button class="menu-btn" onclick="goMenu()">↩ Meny</button>
       </div>
       <div class="word-card" id="wordCard">
-        <div class="word-hint">Vad betyder detta ord på svenska?</div>
+        <div class="word-hint" id="wordHint">Vad betyder detta ord på svenska?</div>
         <div class="eng-word" id="engWord">CAT</div>
       </div>
       <div class="opts" id="opts"></div>
@@ -400,6 +454,10 @@ body{overflow-y:auto;}
   document.head.appendChild(style);
 })();
 
+// ── CURRENT SUBJECT ──────────────────────────────────────────────────────────
+let subject = 'eng'; // 'eng' | 'mat'
+
+// ── ENGLISH BANKS (Åk 1-6) ───────────────────────────────────────────────────
 const BANKS={
   1:{badge:"🌱 Åk 1",dark:false,words:[
     {en:"CAT",sv:"katt",w:["hund","fågel"]},{en:"DOG",sv:"hund",w:["katt","häst"]},
@@ -475,6 +533,150 @@ const BANKS={
   ]}
 };
 
+// ── MATHS QUESTION GENERATOR (Åk 1-6, Swedish curriculum) ───────────────────
+const MATH_BANKS = {
+  1: { badge:"🌱 Åk 1 Matte", dark:false, label:"Räkna ut!" },
+  2: { badge:"🐛 Åk 2 Matte", dark:false, label:"Räkna ut!" },
+  3: { badge:"🦋 Åk 3 Matte", dark:false, label:"Räkna ut!" },
+  4: { badge:"🦊 Åk 4 Matte", dark:false, label:"Räkna ut!" },
+  5: { badge:"🦅 Åk 5 Matte", dark:false, label:"Räkna ut!" },
+  6: { badge:"⚡ Åk 6 Matte", dark:true,  label:"Räkna ut!" },
+};
+
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function genMathQ(lvl){
+  // Returns {q, sv, w:[wrong1,wrong2]} where sv is the correct answer string
+  let q, ans;
+  const r = Math.random();
+
+  if(lvl===1){
+    // Åk 1: addition/subtraktion 0-10, enkla mönster
+    if(r<0.5){
+      const a=rnd(1,9), b=rnd(0,9-a);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else {
+      const a=rnd(1,10), b=rnd(0,a);
+      q=`${a} − ${b} = ?`; ans=a-b;
+    }
+  } else if(lvl===2){
+    // Åk 2: addition/subtraktion 0-100 (tiotals), enkel multiplikation med 2, 5, 10
+    if(r<0.4){
+      const a=rnd(10,90), b=rnd(1,100-a);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else if(r<0.7){
+      const a=rnd(20,100), b=rnd(1,a-1);
+      q=`${a} − ${b} = ?`; ans=a-b;
+    } else {
+      const factor=[2,5,10][rnd(0,2)], x=rnd(1,10);
+      q=`${x} × ${factor} = ?`; ans=x*factor;
+    }
+  } else if(lvl===3){
+    // Åk 3: multiplikation 1-10, division, addition upp till 1000
+    if(r<0.35){
+      const a=rnd(2,10), b=rnd(2,10);
+      q=`${a} × ${b} = ?`; ans=a*b;
+    } else if(r<0.6){
+      const b=rnd(2,10), ans2=rnd(2,10);
+      q=`${b*ans2} ÷ ${b} = ?`; ans=ans2;
+    } else if(r<0.8){
+      const a=rnd(100,900), b=rnd(10,999-a);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else {
+      const a=rnd(200,999), b=rnd(100,a-1);
+      q=`${a} − ${b} = ?`; ans=a-b;
+    }
+  } else if(lvl===4){
+    // Åk 4: stora tal, bråk-förståelse, area, enkla ekvationer
+    if(r<0.25){
+      const a=rnd(100,999), b=rnd(100,9999-a);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else if(r<0.45){
+      const a=rnd(2,12), b=rnd(2,12);
+      q=`${a} × ${b} = ?`; ans=a*b;
+    } else if(r<0.65){
+      const b=rnd(2,12), ans2=rnd(2,12);
+      q=`${b*ans2} ÷ ${b} = ?`; ans=ans2;
+    } else if(r<0.8){
+      // Area av rektangel
+      const w=rnd(2,12), h=rnd(2,12);
+      q=`Area: ${w} × ${h} cm = ?`; ans=w*h;
+    } else {
+      // Enkel ekvation: x + b = c
+      const b=rnd(1,20), c=rnd(b+1,50);
+      q=`x + ${b} = ${c}. Vad är x?`; ans=c-b;
+    }
+  } else if(lvl===5){
+    // Åk 5: procent, negativa tal, koordinater, decimaltal
+    if(r<0.25){
+      const p=[10,20,25,50][rnd(0,3)], base=rnd(2,20)*10;
+      q=`${p}% av ${base} = ?`; ans=Math.round(base*p/100);
+    } else if(r<0.45){
+      // Negativa tal
+      const a=rnd(-10,5), b=rnd(-5,10);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else if(r<0.65){
+      // Decimaltal addition
+      const a=rnd(1,20), ad=rnd(1,9), b=rnd(1,20), bd=rnd(1,9);
+      const sum=((a*10+ad)+(b*10+bd));
+      q=`${a},${ad} + ${b},${bd} = ?`; ans=Math.round(sum)/10;
+    } else if(r<0.82){
+      const a=rnd(13,25), b=rnd(2,12);
+      q=`${a} × ${b} = ?`; ans=a*b;
+    } else {
+      // Omfång
+      const w=rnd(3,15), h=rnd(3,15);
+      q=`Omfång: rektangel ${w}×${h} cm = ?`; ans=2*(w+h);
+    }
+  } else {
+    // Åk 6: algebra, potenser, rationella tal, sannolikhet
+    if(r<0.2){
+      // Potenser
+      const base=rnd(2,5), exp=rnd(2,4);
+      q=`${base}^${exp} = ?`;
+      ans=Math.pow(base,exp);
+    } else if(r<0.38){
+      // Algebra: 2x + b = c
+      const b=rnd(1,15), x=rnd(1,10), c=2*x+b;
+      q=`2x + ${b} = ${c}. Vad är x?`; ans=x;
+    } else if(r<0.55){
+      // Procent av stort tal
+      const p=[5,10,15,20,25,30,50][rnd(0,6)], base=rnd(4,20)*50;
+      q=`${p}% av ${base} = ?`; ans=Math.round(base*p/100);
+    } else if(r<0.7){
+      // Negativa decimaltal / rationellt
+      const a=rnd(-20,20), b=rnd(-20,20);
+      q=`${a} + ${b} = ?`; ans=a+b;
+    } else if(r<0.84){
+      // Volym av rätblock
+      const l=rnd(2,10),w2=rnd(2,10),h2=rnd(2,10);
+      q=`Volym: ${l}×${w2}×${h2} = ?`; ans=l*w2*h2;
+    } else {
+      // Stor multiplikation
+      const a=rnd(12,50), b=rnd(12,50);
+      q=`${a} × ${b} = ?`; ans=a*b;
+    }
+  }
+
+  // Generate 2 wrong answers that are plausible but wrong
+  const wrongs = new Set();
+  const ansN = typeof ans === 'number' ? ans : parseFloat(String(ans));
+  while(wrongs.size < 2){
+    let delta;
+    if(Math.abs(ansN) < 20) delta = rnd(1,5);
+    else if(Math.abs(ansN) < 100) delta = rnd(1,15);
+    else delta = rnd(1, Math.max(5, Math.floor(Math.abs(ansN)*0.15)));
+    const candidate = ansN + (Math.random()<0.5?1:-1)*delta;
+    if(candidate !== ansN) wrongs.add(candidate);
+  }
+
+  return {
+    q,
+    sv: String(ans),
+    w: [...wrongs].map(String)
+  };
+}
+
 const GOAL=20;
 let lvl=1,score=0,locked=false,soundOn=true,usedIdx=[];
 let audioCtx=null;
@@ -485,8 +687,6 @@ const ENEMIES = [
   { name:'GLOSGROTTAN', maxHp:20, color:'#e8a020', accent:'#b06010' },
   { name:'STAVDRAKEN',  maxHp:20, color:'#9b59b6', accent:'#6c3483' },
   { name:'VERBVARGEN',  maxHp:20, color:'#c0392b', accent:'#922b21' },
-  { name:'ADJEKTROLL',  maxHp:20, color:'#16a34a', accent:'#064e1a' },
-  { name:'ORDMÄSTARN',  maxHp:20, color:'#0369a1', accent:'#082f49' },
   { name:'SHADOWSPELL', maxHp:20, color:'#2c3e50', accent:'#8e44ad' },
 ];
 
@@ -515,7 +715,7 @@ function sndClick(){tone(600,'sine',.06,.14);}
 function sndFaint(){tone(300,'sawtooth',.08,.25);tone(200,'sawtooth',.15,.22,.07);tone(120,'sawtooth',.25,.18,.18);}
 
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
-const isDark=()=>BANKS[lvl].dark;
+const isDark=()=>(subject==='eng'?BANKS[lvl]:MATH_BANKS[lvl]).dark;
 
 // ── THEME ──
 function applyTheme(){
@@ -697,9 +897,47 @@ function setState(who, state, duration=600){
 }
 
 // ── SCREENS ──
+function goHome(){
+  sndClick();
+  if(battleRaf){cancelAnimationFrame(battleRaf);battleRaf=null;}
+  document.getElementById('subjScreen').style.display='flex';
+  document.getElementById('lvlScreen').style.display='none';
+  document.getElementById('gameWrap').style.display='none';
+  document.getElementById('winScr').style.display='none';
+  document.querySelectorAll('.confetti').forEach(c=>c.remove());
+  document.getElementById('skyEl').classList.remove('dark');
+}
+
+const ENG_DESCS = [
+  'Enkla ord<br>Djur &amp; saker','Vardagsord<br>Hem &amp; mat',
+  'Fler ord<br>Kropp &amp; natur','Adjektiv<br>&amp; verb',
+  'Svårare ord<br>Egenskaper','Avancerat<br>Fullständigt'
+];
+const MAT_DESCS = [
+  'Addition &amp;<br>subtraktion','Upp till 100<br>Gångertabeller',
+  'Multiplikation<br>&amp; division','Area, ekvationer<br>&amp; stora tal',
+  'Procent, negativa<br>tal &amp; decimal','Algebra, potenser<br>&amp; volym'
+];
+
+function pickSubject(subj){
+  sndClick();
+  subject = subj;
+  // Update level screen labels
+  document.getElementById('lvlTitle').textContent = subj==='eng' ? '🇬🇧 Engelska' : '🔢 Matematik';
+  document.getElementById('lvlSub').textContent   = 'Välj din årskurs!';
+  // Update card descriptions
+  const descs = subj==='eng' ? ENG_DESCS : MAT_DESCS;
+  for(let i=1;i<=6;i++) document.getElementById('ds'+i).innerHTML = descs[i-1];
+  // Show AI button only for english
+  document.getElementById('refreshBtn').style.display = subj==='eng' ? 'flex' : 'none';
+  document.getElementById('subjScreen').style.display='none';
+  document.getElementById('lvlScreen').style.display='flex';
+}
+
 function goMenu(){
   sndClick();
   if(battleRaf){cancelAnimationFrame(battleRaf);battleRaf=null;}
+  // Go back to level picker within same subject
   document.getElementById('lvlScreen').style.display='flex';
   document.getElementById('gameWrap').style.display='none';
   document.getElementById('winScr').style.display='none';
@@ -708,8 +946,7 @@ function goMenu(){
 }
 
 function startLevel(n){
-  sndClick();
-  lvl=n; score=0; usedIdx=[]; locked=false;
+  sndClick();lvl=n;score=0;usedIdx=[];locked=false;
   playerHp=PLAYER.maxHp; enemyHp=ENEMIES[Math.min(n-1,ENEMIES.length-1)].maxHp;
   playerState='idle'; enemyState='idle';
 
@@ -718,7 +955,9 @@ function startLevel(n){
   document.getElementById('playerName').textContent=PLAYER.name;
   setHp('enemy',enemyHp,enemy.maxHp);
   setHp('player',playerHp,PLAYER.maxHp);
-  document.getElementById('lvBadge').textContent=BANKS[n].badge;
+
+  const bank = subject==='eng' ? BANKS[n] : MATH_BANKS[n];
+  document.getElementById('lvBadge').textContent=bank.badge;
   document.getElementById('lvlScreen').style.display='none';
   document.getElementById('gameWrap').style.display='flex';
   document.getElementById('winScr').style.display='none';
@@ -726,23 +965,35 @@ function startLevel(n){
   applyTheme();
   document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('dark-opt',isDark()));
   setMsg('Välj rätt svar för att attackera!');
+  document.getElementById('wordHint').textContent = subject==='eng' ? 'Vad betyder detta ord på svenska?' : 'Räkna ut!';
+  document.getElementById('engWord').className = subject==='eng' ? 'eng-word' : 'eng-word math-q';
   setTimeout(startBattle,60);
   nextQ();
 }
 
-function nextLevel(){sndClick();lvl<4?startLevel(lvl+1):goMenu();}
+function nextLevel(){sndClick();lvl<6?startLevel(lvl+1):goMenu();}
 function replayLevel(){sndClick();startLevel(lvl);}
 
 function nextQ(){
   locked=false;
   setBubble(isDark()?'Använd Kraften! ⚡':'Välj rätt svar! 💥');
-  const bank=BANKS[lvl].words;
-  if(usedIdx.length>=bank.length) usedIdx=[];
-  const avail=bank.map((_,i)=>i).filter(i=>!usedIdx.includes(i));
-  const i=avail[Math.floor(Math.random()*avail.length)];
-  usedIdx.push(i);
-  const word=bank[i]; window._w=word;
-  document.getElementById('engWord').textContent=word.en;
+
+  let word;
+  if(subject==='eng'){
+    const bank=BANKS[lvl].words;
+    if(usedIdx.length>=bank.length) usedIdx=[];
+    const avail=bank.map((_,i)=>i).filter(i=>!usedIdx.includes(i));
+    const i=avail[Math.floor(Math.random()*avail.length)];
+    usedIdx.push(i);
+    word=bank[i];
+    document.getElementById('engWord').textContent=word.en;
+  } else {
+    // Generate fresh math question each time
+    word=genMathQ(lvl);
+    document.getElementById('engWord').textContent=word.q;
+  }
+  window._w=word;
+
   const choices=shuffle([word.sv,...word.w.slice(0,2)]);
   const box=document.getElementById('opts'); box.innerHTML='';
   choices.forEach(ch=>{
@@ -817,9 +1068,8 @@ function showWin(lost=false){
     document.getElementById('winIco').textContent=isDark()?'⚡':'🎉';
     document.getElementById('winScr').querySelector('.win-ttl').textContent='SEGER!';
     document.getElementById('winSub').textContent=
-      lvl===6?'Åk 6 klar! Du är en ordmästare! 👑':
-      lvl<6?`Åk ${lvl} klar! Redo för nästa? 🚀`:
-      'Du klarade ALLT! Pokémästare! 👑';
+      lvl===6?`Åk 6 klar! Du är en ${subject==='mat'?'matteguru':'ordmästare'}! 👑`:
+      `Åk ${lvl} klar! Redo för nästa? 🚀`;
   }
   const nb=document.getElementById('btnNext');
   nb.style.display=(!lost&&lvl<6)?'block':'none';
@@ -827,7 +1077,7 @@ function showWin(lost=false){
   nb.textContent=lvl===5?'Åk 6 ⚡':'Nästa åk ➡️';
   document.getElementById('winScr').style.display='flex';
   if(!lost){
-    const cols=BANKS[lvl].dark?['#c084fc','#818cf8','#38bdf8','#e879f9']:['#ffd700','#ff6b6b','#4ecdc4','#45b7d1','#a8e06d'];
+    const cols=isDark()?['#c084fc','#818cf8','#38bdf8','#e879f9']:['#ffd700','#ff6b6b','#4ecdc4','#45b7d1','#a8e06d'];
     for(let i=0;i<80;i++){
       const c2=document.createElement('div'); c2.className='confetti';
       c2.style.cssText='left:'+Math.random()*100+'%;background:'+cols[i%cols.length]+';animation-duration:'+(1.5+Math.random()*2.5)+'s;animation-delay:'+Math.random()*2+'s;border-radius:'+(Math.random()>.5?'50%':'3px');
@@ -851,12 +1101,12 @@ document.getElementById('sndBtn').onclick=()=>{
 };
 async function fetchWordsForLevel(lvlNum){
   const prompts={
-    1:`Generate 20 simple English words for Swedish grade 1 children (age 7). Basic nouns: animals, colors, numbers, everyday objects. Swedish translation + 2 wrong Swedish options. Return ONLY a JSON array like [{"en":"CAT","sv":"katt","w":["hund","fagel"]}]. No markdown.`,
-    2:`Generate 20 English words for Swedish grade 2 (age 8). Nouns: home, food, clothes, weather. Swedish translation + 2 wrong options. Return ONLY JSON array like [{"en":"BREAD","sv":"brod","w":["smor","ost"]}]. No markdown.`,
-    3:`Generate 20 English words for Swedish grade 3 (age 9). Body parts, nature, household objects. Swedish translation + 2 wrong options. Return ONLY JSON array like [{"en":"HAND","sv":"hand","w":["fot","arm"]}]. No markdown.`,
-    4:`Generate 20 English words for Swedish grade 4 (age 10). Common adjectives and action verbs: happy, run, jump, angry, tired. Swedish translation + 2 wrong options. Return ONLY JSON array like [{"en":"HAPPY","sv":"glad","w":["ledsen","arg"]}]. No markdown.`,
-    5:`Generate 20 English words for Swedish grade 5 (age 11). More complex adjectives and abstract nouns: brave, curious, adventure, discover, shadow. Swedish translation + 2 wrong options. Return ONLY JSON array like [{"en":"BRAVE","sv":"modig","w":["radd","snall"]}]. No markdown.`,
-    6:`Generate 20 advanced English words for Swedish grade 6 (age 12). Abstract vocabulary: enormous, determined, communicate, responsible, generous, patient. Swedish translation + 2 wrong options. Return ONLY JSON array like [{"en":"ENORMOUS","sv":"enorm","w":["liten","vanlig"]}]. No markdown.`
+    1:`Generate 20 simple English words for Swedish grade 1 (age 7). Animals, colors, numbers. Swedish translation + 2 wrong options. ONLY JSON array like [{"en":"CAT","sv":"katt","w":["hund","fagel"]}]. No markdown.`,
+    2:`Generate 20 English words for Swedish children age 8-9. Nouns: home, school, body parts. Give correct Swedish translation and 2 wrong Swedish options. Return ONLY a JSON array. Example: [{"en":"DOOR","sv":"dorr","w":["fonster","tak"]}]. No markdown. Just the array.`,
+    3:`Generate 20 English words for Swedish children age 9-10. Adjectives and verbs. Give correct Swedish translation and 2 wrong Swedish options. Return ONLY a JSON array. Example: [{"en":"BRAVE","sv":"modig","w":["radd","snall"]}]. No markdown. Just the array.`,
+    4:`Generate 20 English adjectives and verbs for Swedish grade 4 (age 10). happy, angry, run, swim, fast, cold. Swedish translation + 2 wrong options. ONLY JSON array like [{"en":"HAPPY","sv":"glad","w":["ledsen","arg"]}]. No markdown.`,
+    5:`Generate 20 English words for Swedish grade 5 (age 11). brave, curious, discover, adventure, shadow, thunder. Swedish translation + 2 wrong options. ONLY JSON array like [{"en":"BRAVE","sv":"modig","w":["radd","snall"]}]. No markdown.`,
+    6:`Generate 20 advanced English words for Swedish grade 6 (age 12). enormous, determined, communicate, responsible, generous. Swedish translation + 2 wrong options. ONLY JSON array like [{"en":"ENORMOUS","sv":"enorm","w":["liten","vanlig"]}]. No markdown.`
   }
 
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
