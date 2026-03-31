@@ -323,6 +323,129 @@ body{overflow-y:auto;}
   #clockCanvas{width:140px!important;height:140px!important;}
   .digital-display{font-size:32px;padding:8px 14px;}
 }
+
+/* ── PROGRESS RING on subject screen ─────────────────────────────────────── */
+.prog-section{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;}
+.prog-ring-wrap{position:relative;width:160px;height:160px;}
+.prog-ring-wrap svg{transform:rotate(-90deg);}
+.prog-ring-bg{fill:none;stroke:rgba(255,255,255,.15);stroke-width:12;}
+.prog-ring-fill{fill:none;stroke-width:12;stroke-linecap:round;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.68,-0.55,.27,1.55);
+  stroke:url(#progGrad);}
+.prog-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;}
+.prog-pct{font-family:'Fredoka One',cursive;font-size:36px;color:#fff;
+  text-shadow:0 2px 8px rgba(0,0,0,.3);line-height:1;}
+.prog-label{font-size:12px;color:rgba(255,255,255,.75);font-weight:700;margin-top:2px;}
+.prog-bars{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px;padding:0 12px;}
+.prog-subj{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:100px;}
+.prog-subj-name{font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,255,255,.85);}
+.prog-subj-track{width:100%;height:8px;background:rgba(255,255,255,.15);border-radius:8px;overflow:hidden;}
+.prog-subj-fill{height:100%;border-radius:8px;transition:width 1s cubic-bezier(.68,-0.55,.27,1.55);}
+.prog-subj-num{font-size:11px;color:rgba(255,255,255,.6);font-weight:700;}
+
+/* ── ALL-DONE CELEBRATION SCREEN ─────────────────────────────────────────── */
+.alldone-scr{position:fixed;inset:0;z-index:300;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1a0050,#002a6e,#003a1a);
+  overflow:hidden;}
+.alldone-scr.show{display:flex;}
+.alldone-stars{position:absolute;inset:0;pointer-events:none;}
+.alldone-ico{font-size:90px;animation:adBounce 0.8s cubic-bezier(.68,-0.55,.27,1.55) both;margin-bottom:10px;}
+.alldone-title{font-family:'Fredoka One',cursive;font-size:52px;
+  background:linear-gradient(90deg,#ffd700,#ff6b9d,#c084fc,#60a5fa,#6ee7b7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:adBounce 0.8s cubic-bezier(.68,-0.55,.27,1.55) .1s both;
+  text-align:center;padding:0 16px;}
+.alldone-sub{font-size:20px;color:#c8ffb0;font-weight:700;margin:10px 0 28px;
+  animation:adBounce 0.8s cubic-bezier(.68,-0.55,.27,1.55) .2s both;text-align:center;padding:0 20px;}
+.alldone-btn{background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;color:#1a1a2e;
+  font-family:'Fredoka One',cursive;font-size:22px;padding:14px 42px;border-radius:50px;
+  cursor:pointer;box-shadow:0 8px 30px rgba(255,200,0,.5);
+  animation:adBounce 0.8s cubic-bezier(.68,-0.55,.27,1.55) .3s both;
+  touch-action:manipulation;}
+.alldone-btn:hover{transform:scale(1.06);}
+.adconfetti{position:absolute;pointer-events:none;animation:adFall linear forwards;}
+@keyframes adBounce{0%{transform:scale(0) rotate(-8deg);opacity:0}80%{transform:scale(1.1) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes adFall{0%{transform:translateY(-30px) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(110vh) rotate(800deg) scale(.5);opacity:0}}
+
+/* subject card: show checkmark when done */
+.subj-card.done::after{content:'✅';position:absolute;top:8px;right:10px;font-size:18px;}
+.subj-card{position:relative;}
+.subj-card .prog-mini{height:5px;width:100%;background:rgba(255,255,255,.15);border-radius:5px;margin-top:8px;overflow:hidden;}
+.subj-card .prog-mini-fill{height:100%;border-radius:5px;transition:width .8s ease;}
+
+@media(max-width:600px){
+  .prog-ring-wrap{width:130px;height:130px;}
+  .prog-pct{font-size:28px;}
+  .prog-subj{min-width:80px;}
+  .alldone-title{font-size:36px;}
+  .alldone-sub{font-size:16px;}
+  .alldone-ico{font-size:70px;}
+}
+
+/* ── USER / PROFILE SCREEN ──────────────────────────────────────────────── */
+.user-screen{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(8,40,4,.75);backdrop-filter:blur(10px);
+  animation:ovIn .4s ease;overflow-y:auto;padding:24px;}
+.user-box{background:rgba(255,255,255,.12);border:2.5px solid rgba(255,255,255,.25);
+  border-radius:32px;padding:36px 32px;max-width:420px;width:100%;text-align:center;
+  backdrop-filter:blur(8px);box-shadow:0 16px 48px rgba(0,0,0,.3);}
+.user-ico{font-size:64px;margin-bottom:8px;}
+.user-title{font-family:'Fredoka One',cursive;font-size:32px;color:#fff;
+  text-shadow:0 3px 0 rgba(0,0,0,.2);margin-bottom:6px;}
+.user-sub{color:#c8ffb0;font-size:14px;font-weight:700;margin-bottom:24px;}
+.user-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;max-height:220px;overflow-y:auto;}
+.user-btn{background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.25);
+  border-radius:16px;padding:12px 16px;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:12px;color:#fff;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.user-btn:hover,.user-btn:active{background:rgba(255,255,255,.28);transform:scale(1.02);}
+.user-btn .u-avatar{font-size:28px;width:36px;text-align:center;}
+.user-btn .u-info{flex:1;text-align:left;}
+.user-btn .u-name{font-family:'Fredoka One',cursive;font-size:18px;}
+.user-btn .u-prog{font-size:11px;color:rgba(255,255,255,.6);margin-top:1px;}
+.user-btn .u-del{font-size:18px;opacity:.5;padding:4px 6px;cursor:pointer;
+  border-radius:8px;transition:opacity .2s;}
+.user-btn .u-del:hover{opacity:1;background:rgba(255,80,80,.3);}
+
+.user-divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;}
+.user-divider::before,.user-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.2);}
+.user-divider span{color:rgba(255,255,255,.5);font-size:12px;font-weight:700;}
+
+.user-input-wrap{display:flex;gap:8px;}
+.user-input{flex:1;background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.3);
+  border-radius:14px;padding:12px 16px;font-family:'Nunito',sans-serif;font-size:18px;
+  font-weight:700;color:#fff;outline:none;transition:border-color .2s;}
+.user-input::placeholder{color:rgba(255,255,255,.4);}
+.user-input:focus{border-color:rgba(106,191,62,.7);}
+.user-add-btn{background:linear-gradient(135deg,#6abf3e,#3a8a10);border:none;
+  border-radius:14px;padding:12px 18px;font-family:'Fredoka One',cursive;
+  font-size:18px;color:#fff;cursor:pointer;transition:transform .2s;
+  touch-action:manipulation;white-space:nowrap;}
+.user-add-btn:hover{transform:scale(1.06);}
+
+/* Active user chip on subject screen */
+.active-user-bar{display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:14px;flex-wrap:wrap;}
+.active-user-chip{background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.3);
+  border-radius:50px;padding:6px 16px;display:flex;align-items:center;gap:8px;
+  font-family:'Fredoka One',cursive;font-size:16px;color:#fff;cursor:pointer;
+  transition:all .2s;touch-action:manipulation;}
+.active-user-chip:hover{background:rgba(255,255,255,.28);}
+.active-user-chip .chip-ico{font-size:20px;}
+.switch-user-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);
+  border-radius:50px;padding:5px 12px;font-family:'Fredoka One',cursive;font-size:12px;
+  color:rgba(255,255,255,.7);cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.switch-user-btn:hover{background:rgba(255,255,255,.2);color:#fff;}
+
+@media(max-width:600px){
+  .user-box{padding:26px 18px;}
+  .user-title{font-size:26px;}
+  .user-input{font-size:16px;}
+  .user-add-btn{font-size:16px;padding:12px 14px;}
+}
 </style>
 </head>
 <body>
@@ -352,32 +475,116 @@ body{overflow-y:auto;}
 
 <button class="snd-btn" id="sndBtn">🔊</button>
 
+<!-- USER / PROFILE SCREEN -->
+<div class="user-screen" id="userScreen">
+  <div class="user-box">
+    <div class="user-ico">🌳</div>
+    <div class="user-title">Vem ska lära sig?</div>
+    <div class="user-sub">Välj din profil eller skapa en ny!</div>
+    <div class="user-list" id="userList">
+      <!-- filled by JS -->
+    </div>
+    <div class="user-divider"><span>NY SPELARE</span></div>
+    <div class="user-input-wrap">
+      <input class="user-input" id="userNameInput" type="text"
+        placeholder="Skriv ditt namn..." maxlength="20"
+        onkeydown="if(event.key==='Enter') addUser()">
+      <button class="user-add-btn" onclick="addUser()">➕ Lägg till</button>
+    </div>
+  </div>
+</div>
+
 <!-- SUBJECT PICKER -->
-<div class="subj-screen" id="subjScreen">
+<div class="subj-screen" id="subjScreen" style="display:none">
+  <div class="active-user-bar">
+    <div class="active-user-chip" onclick="showUserScreen()">
+      <span class="chip-ico" id="activeUserIco">🧒</span>
+      <span id="activeUserName">Spelare</span>
+    </div>
+    <button class="switch-user-btn" onclick="showUserScreen()">Byt användare</button>
+  </div>
   <div class="subj-title">🌳 Lärskogen 🌳</div>
   <div class="subj-sub">Vad vill du öva på idag?</div>
   <div class="subj-cards">
-    <div class="subj-card eng" onclick="pickSubject('eng')">
+    <div class="subj-card eng" id="sc-eng" onclick="pickSubject('eng')">
       <div class="s-ico">🇬🇧</div>
       <div class="s-nm">Engelska</div>
       <div class="s-ds">Lär dig engelska ord</div>
+      <div class="prog-mini"><div class="prog-mini-fill" id="pm-eng" style="width:0%;background:#6ee7b7"></div></div>
     </div>
-    <div class="subj-card mat" onclick="pickSubject('mat')">
+    <div class="subj-card mat" id="sc-mat" onclick="pickSubject('mat')">
       <div class="s-ico">🔢</div>
       <div class="s-nm">Matematik</div>
       <div class="s-ds">Öva matte-uppgifter</div>
+      <div class="prog-mini"><div class="prog-mini-fill" id="pm-mat" style="width:0%;background:#fbbf24"></div></div>
     </div>
-    <div class="subj-card clk" onclick="pickSubject('clk')">
+    <div class="subj-card clk" id="sc-clk" onclick="pickSubject('clk')">
       <div class="s-ico">🕐</div>
       <div class="s-nm">Klockan</div>
       <div class="s-ds">Analog &amp; digital tid</div>
+      <div class="prog-mini"><div class="prog-mini-fill" id="pm-clk" style="width:0%;background:#67e8f9"></div></div>
     </div>
-    <div class="subj-card so" onclick="pickSubject('so')">
+    <div class="subj-card so" id="sc-so" onclick="pickSubject('so')">
       <div class="s-ico">🌍</div>
       <div class="s-nm">SO</div>
       <div class="s-ds">Geo, historia,<br>religion &amp; samhälle</div>
+      <div class="prog-mini"><div class="prog-mini-fill" id="pm-so" style="width:0%;background:#fb923c"></div></div>
     </div>
   </div>
+
+  <!-- Progress ring -->
+  <div class="prog-section">
+    <div class="prog-ring-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ffd700"/>
+            <stop offset="33%" style="stop-color:#6ee7b7"/>
+            <stop offset="66%" style="stop-color:#60a5fa"/>
+            <stop offset="100%" style="stop-color:#c084fc"/>
+          </linearGradient>
+        </defs>
+        <circle class="prog-ring-bg" cx="80" cy="80" r="68"/>
+        <circle class="prog-ring-fill" id="progRingFill" cx="80" cy="80" r="68"
+          stroke-dasharray="427" stroke-dashoffset="427"/>
+      </svg>
+      <div class="prog-ring-center">
+        <div class="prog-pct" id="progPct">0%</div>
+        <div class="prog-label">Totalt</div>
+      </div>
+    </div>
+    <div class="prog-bars" id="progBars">
+      <div class="prog-subj">
+        <div class="prog-subj-name">🇬🇧 Engelska</div>
+        <div class="prog-subj-track"><div class="prog-subj-fill" id="pf-eng" style="width:0%;background:#6ee7b7"></div></div>
+        <div class="prog-subj-num" id="pn-eng">0/6</div>
+      </div>
+      <div class="prog-subj">
+        <div class="prog-subj-name">🔢 Matte</div>
+        <div class="prog-subj-track"><div class="prog-subj-fill" id="pf-mat" style="width:0%;background:#fbbf24"></div></div>
+        <div class="prog-subj-num" id="pn-mat">0/6</div>
+      </div>
+      <div class="prog-subj">
+        <div class="prog-subj-name">🕐 Klockan</div>
+        <div class="prog-subj-track"><div class="prog-subj-fill" id="pf-clk" style="width:0%;background:#67e8f9"></div></div>
+        <div class="prog-subj-num" id="pn-clk">0/6</div>
+      </div>
+      <div class="prog-subj">
+        <div class="prog-subj-name">🌍 SO</div>
+        <div class="prog-subj-track"><div class="prog-subj-fill" id="pf-so" style="width:0%;background:#fb923c"></div></div>
+        <div class="prog-subj-num" id="pn-so">0/6</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALL-DONE CELEBRATION -->
+<div class="alldone-scr" id="alldoneScr">
+  <div class="alldone-stars" id="alldoneStars"></div>
+  <div class="alldone-ico">🏆</div>
+  <div class="alldone-title">DU ÄR EN MÄSTARE!</div>
+  <div class="alldone-sub">Du har klarat ALLT i Lärskogen!<br>Engelska · Matte · Klockan · SO 🌟</div>
+  <button class="alldone-btn" onclick="closeAlldone()">Spela igen! 🎮</button>
 </div>
 
 <!-- LEVEL SELECT -->
@@ -1442,6 +1649,8 @@ function showWin(lost=false){
     document.getElementById('winSub').textContent=
       lvl===6?`${subject==='clk'?'Nivå 6':'Åk 6'} klar! Du är en ${subject==='mat'?'matteguru':subject==='clk'?'klockexpert':subject==='so'?'SO-expert':'ordmästare'}! 👑`:
       `${subject==='clk'?'Nivå':'Åk'} ${lvl} klar! Redo för nästa? 🚀`;
+    // Save progress
+    markLevelDone(subject, lvl);
   }
   const nb=document.getElementById('btnNext');
   nb.style.display=(!lost&&lvl<6)?'block':'none';
@@ -1457,6 +1666,190 @@ function showWin(lost=false){
     }
   }
 }
+
+
+// ── USER & PROGRESS SYSTEM ────────────────────────────────────────────────────
+const TOTAL_LEVELS = 24;
+const AVATARS = ['🧒','👦','👧','🧑','🦊','🐉','🦄','🐸','🐼','🦁','🐯','🦋','⭐','🚀','🎮'];
+
+let activeUser = null; // { id, name, avatar }
+
+// Storage helpers — per-user key
+function usersKey(){ return 'larskogen_users'; }
+function progKey(id){ return 'larskogen_prog_'+id; }
+
+function loadUsers(){
+  try{ return JSON.parse(localStorage.getItem(usersKey())||'[]'); }catch(e){return [];}
+}
+function saveUsers(u){ try{localStorage.setItem(usersKey(),JSON.stringify(u));}catch(e){} }
+
+function loadProgress(userId){
+  const id = userId || (activeUser&&activeUser.id);
+  if(!id) return emptyProgress();
+  try{ return JSON.parse(localStorage.getItem(progKey(id))||'null') || emptyProgress(); }catch(e){return emptyProgress();}
+}
+function saveProgress(p, userId){
+  const id = userId || (activeUser&&activeUser.id);
+  if(!id) return;
+  try{ localStorage.setItem(progKey(id), JSON.stringify(p)); }catch(e){}
+}
+function emptyProgress(){ return {eng:[0,0,0,0,0,0],mat:[0,0,0,0,0,0],clk:[0,0,0,0,0,0],so:[0,0,0,0,0,0]}; }
+
+function countDone(arr){ return (arr||[]).reduce((a,b)=>a+b,0); }
+function totalDoneFor(p){ return Object.values(p).flat().reduce((a,b)=>a+b,0); }
+
+// ── USER SCREEN ───────────────────────────────────────────────────────────────
+function showUserScreen(){
+  renderUserList();
+  document.getElementById('userScreen').style.display='flex';
+  document.getElementById('subjScreen').style.display='none';
+  document.getElementById('userNameInput').value='';
+}
+
+function hideUserScreen(){
+  document.getElementById('userScreen').style.display='none';
+  document.getElementById('subjScreen').style.display='flex';
+}
+
+function renderUserList(){
+  const users = loadUsers();
+  const list = document.getElementById('userList');
+  list.innerHTML='';
+  if(users.length===0){
+    list.innerHTML='<div style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;padding:8px">Inga profiler ännu — skapa din första!</div>';
+    return;
+  }
+  users.forEach(u=>{
+    const p = loadProgress(u.id);
+    const done = totalDoneFor(p);
+    const pct = Math.round(done/TOTAL_LEVELS*100);
+    const div = document.createElement('div');
+    div.className='user-btn'+(activeUser&&activeUser.id===u.id?' active-user':'');
+    if(activeUser&&activeUser.id===u.id) div.style.borderColor='#6abf3e';
+    div.innerHTML=`
+      <div class="u-avatar">${u.avatar}</div>
+      <div class="u-info">
+        <div class="u-name">${u.name}</div>
+        <div class="u-prog">${done}/${TOTAL_LEVELS} nivåer klara · ${pct}%</div>
+      </div>
+      <div class="u-del" onclick="deleteUser('${u.id}',event)" title="Ta bort">🗑️</div>`;
+    div.addEventListener('click', ()=>selectUser(u));
+    list.appendChild(div);
+  });
+}
+
+function addUser(){
+  const input = document.getElementById('userNameInput');
+  const name = input.value.trim();
+  if(!name) { input.focus(); input.style.borderColor='#ff6b6b'; setTimeout(()=>input.style.borderColor='',800); return; }
+  const users = loadUsers();
+  if(users.some(u=>u.name.toLowerCase()===name.toLowerCase())){
+    input.style.borderColor='#fbbf24';
+    setTimeout(()=>input.style.borderColor='',800);
+    return;
+  }
+  const id = 'u_'+Date.now();
+  const avatar = AVATARS[Math.floor(Math.random()*AVATARS.length)];
+  const newUser = {id, name, avatar};
+  users.push(newUser);
+  saveUsers(users);
+  sndCorrect();
+  selectUser(newUser);
+}
+
+function selectUser(u){
+  activeUser = u;
+  try{localStorage.setItem('larskogen_lastuser',u.id);}catch(e){}
+  document.getElementById('activeUserName').textContent = u.name;
+  document.getElementById('activeUserIco').textContent = u.avatar;
+  updateProgressUI(loadProgress());
+  sndClick();
+  hideUserScreen();
+}
+
+function deleteUser(id, e){
+  e.stopPropagation();
+  const users = loadUsers().filter(u=>u.id!==id);
+  saveUsers(users);
+  try{ localStorage.removeItem(progKey(id)); }catch(x){}
+  if(activeUser&&activeUser.id===id){
+    activeUser=null;
+    document.getElementById('activeUserName').textContent='Spelare';
+    document.getElementById('activeUserIco').textContent='🧒';
+    updateProgressUI(emptyProgress());
+  }
+  renderUserList();
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function markLevelDone(subj, lvlNum){
+  if(!activeUser) return;
+  const p = loadProgress();
+  if(!p[subj]) p[subj]=[0,0,0,0,0,0];
+  p[subj][lvlNum-1] = 1;
+  saveProgress(p);
+  updateProgressUI(p);
+  if(totalDoneFor(p) >= TOTAL_LEVELS){
+    setTimeout(showAlldone, 1800);
+  }
+}
+
+function updateProgressUI(p){
+  const subjKeys = ['eng','mat','clk','so'];
+  let totalDone = 0;
+  subjKeys.forEach(s=>{
+    const done = countDone(p[s]);
+    totalDone += done;
+    const pct = done/6*100;
+    const pm=document.getElementById('pm-'+s); if(pm) pm.style.width=pct+'%';
+    const pf=document.getElementById('pf-'+s); if(pf) pf.style.width=pct+'%';
+    const pn=document.getElementById('pn-'+s); if(pn) pn.textContent=done+'/6';
+    const sc=document.getElementById('sc-'+s); if(sc) sc.classList.toggle('done',done===6);
+  });
+  const circ=427.26, offset=circ-(totalDone/TOTAL_LEVELS)*circ;
+  const ring=document.getElementById('progRingFill'); if(ring) ring.style.strokeDashoffset=offset;
+  const pctEl=document.getElementById('progPct'); if(pctEl) pctEl.textContent=Math.round(totalDone/TOTAL_LEVELS*100)+'%';
+}
+
+function showAlldone(){
+  const starsEl=document.getElementById('alldoneStars'); starsEl.innerHTML='';
+  const chars=['⭐','🌟','✨','💫','🎉','🎊','🏆','👑','🌈','🦄'];
+  for(let i=0;i<70;i++){
+    const s=document.createElement('div'); s.className='adconfetti';
+    const sz=18+Math.random()*26;
+    s.style.cssText=`left:${Math.random()*100}%;top:-40px;font-size:${sz}px;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*2.5}s;`;
+    s.textContent=chars[i%chars.length]; starsEl.appendChild(s);
+  }
+  // Put the user's name in the celebration
+  const nm = activeUser ? activeUser.name : 'Mästare';
+  const adSub=document.getElementById('alldoneScr').querySelector('.alldone-sub'); if(adSub) adSub.innerHTML=
+    `<strong>${nm}</strong> har klarat ALLT i Lärskogen!<br>Engelska · Matte · Klockan · SO 🌟`;
+  document.getElementById('alldoneScr').classList.add('show');
+  [262,330,392,523,659,784,1047].forEach((f,i)=>tone(f,'sine',.4,.3,i*.12));
+}
+
+function closeAlldone(){
+  document.getElementById('alldoneScr').classList.remove('show');
+  if(activeUser){
+    saveProgress(emptyProgress());
+    updateProgressUI(emptyProgress());
+  }
+}
+
+// ── INIT: show user screen on first load ─────────────────────────────────────
+(function(){
+  const users = loadUsers();
+  if(users.length===0){
+    // First time ever — show user screen directly
+    document.getElementById('userScreen').style.display='flex';
+    document.getElementById('subjScreen').style.display='none';
+  } else {
+    // Auto-select last used user
+    const lastId = localStorage.getItem('larskogen_lastuser');
+    const last = users.find(u=>u.id===lastId) || users[0];
+    selectUser(last);
+  }
+})();
 
 window.addEventListener('resize',()=>{
   if(battleRaf){
