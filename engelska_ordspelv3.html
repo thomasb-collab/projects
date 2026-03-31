@@ -299,6 +299,7 @@ body{overflow-y:auto;}
 }
 
 .subj-card.clk{border-color:#67e8f9;}.subj-card.clk:hover{box-shadow:0 10px 36px rgba(80,200,240,.45);}
+.subj-card.so{border-color:#fb923c;}.subj-card.so:hover{box-shadow:0 10px 36px rgba(255,140,50,.5);}
 
 /* Clock question area */
 .clock-card{background:rgba(255,255,255,.76);border:3px solid rgba(255,255,255,.9);
@@ -370,6 +371,11 @@ body{overflow-y:auto;}
       <div class="s-ico">🕐</div>
       <div class="s-nm">Klockan</div>
       <div class="s-ds">Analog &amp; digital tid</div>
+    </div>
+    <div class="subj-card so" onclick="pickSubject('so')">
+      <div class="s-ico">🌍</div>
+      <div class="s-nm">SO</div>
+      <div class="s-ds">Geo, historia,<br>religion &amp; samhälle</div>
     </div>
   </div>
 </div>
@@ -847,6 +853,144 @@ function drawClock(canvas, h, m, dark){
   c.beginPath();c.arc(cx,cy,2,0,Math.PI*2);c.fill();
 }
 
+
+// ── SO BANKS (Geografi, Historia, Religion, Samhällskunskap Åk 1-6) ─────────
+const SO_BANKS = {
+  1:{badge:"🌱 SO Åk 1",dark:false,words:[
+    // Enkla geografiska begrepp och närmiljö
+    {en:"Vad kallas landet vi bor i?",sv:"Sverige",w:["Norge","Danmark"]},
+    {en:"Vad heter vår huvudstad?",sv:"Stockholm",w:["Göteborg","Malmö"]},
+    {en:"Vad kallas den som bestämmer i en familj?",sv:"Förälder",w:["Granne","Kompis"]},
+    {en:"Vad är ett land?",sv:"En plats med egna regler",w:["En stad","En skog"]},
+    {en:"Vad kallas havet söder om Sverige?",sv:"Östersjön",w:["Atlanten","Nordsjön"]},
+    {en:"Vad är en kontinent?",sv:"Stort landområde",w:["En ö","En stad"]},
+    {en:"Vilken kontinent bor vi på?",sv:"Europa",w:["Afrika","Asien"]},
+    {en:"Vad kallas en människa som hjälper andra?",sv:"Snäll/hjälpsam",w:["Lat","Arg"]},
+    {en:"Vad är en regel?",sv:"Något man ska följa",w:["En lek","En mat"]},
+    {en:"Vad kallas när många bor tätt ihop?",sv:"Stad",w:["Skog","Hav"]},
+    {en:"Vilken är Sveriges flaggas färger?",sv:"Blå och gul",w:["Röd och vit","Grön och vit"]},
+    {en:"Vad heter valutan i Sverige?",sv:"Kronor",w:["Euro","Dollar"]},
+    {en:"Vad kallas en grupp länder med gemensamma regler?",sv:"EU",w:["FN","NATO"]},
+    {en:"Vad är en karta?",sv:"Bild av ett område",w:["En bok","En flagga"]},
+    {en:"Vad kallas den som leder en stad?",sv:"Borgmästare/kommunalråd",w:["Kung","Polis"]},
+    {en:"Vilket hav finns väster om Sverige?",sv:"Nordsjön/Kattegatt",w:["Medelhavet","Stilla havet"]},
+    {en:"Vad är ett museum?",sv:"Plats med gamla saker",w:["En affär","En skola"]},
+    {en:"Vad kallas högtiden i december?",sv:"Jul",w:["Påsk","Midsommar"]},
+    {en:"Vad är en tradition?",sv:"Något man gör varje år",w:["En lag","En sport"]},
+    {en:"Vad kallas det när vi väljer ledare?",sv:"Val",w:["Tävling","Fest"]}
+  ]},
+  2:{badge:"🐛 SO Åk 2",dark:false,words:[
+    {en:"Vad heter Sveriges kung?",sv:"Carl XVI Gustaf",w:["Gustav Vasa","Karl XII"]},
+    {en:"Vad kallas jordens största hav?",sv:"Stilla havet",w:["Atlanten","Indiska oceanen"]},
+    {en:"Vilken är jordens största kontinent?",sv:"Asien",w:["Afrika","Europa"]},
+    {en:"Vad kallas folk som flyr från sitt land?",sv:"Flyktingar",w:["Turister","Invandrare"]},
+    {en:"Vad är demokrati?",sv:"Folket bestämmer",w:["Kungen bestämmer","Polisen bestämmer"]},
+    {en:"Vad kallas nordens länder tillsammans?",sv:"Skandinavien/Norden",w:["Baltikum","Benelux"]},
+    {en:"Vilket land ligger norr om Sverige?",sv:"Norge",w:["Danmark","Finland"]},
+    {en:"Vad kallas klimatet nära ekvatorn?",sv:"Tropiskt",w:["Arktiskt","Tempererat"]},
+    {en:"Vad är ett samhälle?",sv:"Grupp människor som lever tillsammans",w:["En skola","En affär"]},
+    {en:"Vad kallas en persons hemland?",sv:"Fosterland",w:["Semesterland","Grannland"]},
+    {en:"Vad heter FN på svenska?",sv:"Förenta nationerna",w:["Fria nationer","Fredliga nationer"]},
+    {en:"Vad kallas skillnaden mellan rika och fattiga?",sv:"Ojämlikhet",w:["Frihet","Demokrati"]},
+    {en:"Vad är en kyrka?",sv:"Religiös byggnad",w:["En skola","En affär"]},
+    {en:"Vad kallas jordens mittpunkt (linje)?",sv:"Ekvatorn",w:["Polcirkeln","Meridianen"]},
+    {en:"Vad är ett yrke?",sv:"Arbete man har",w:["En sport","En hobby"]},
+    {en:"Vad kallas den heliga boken i islam?",sv:"Koranen",w:["Bibeln","Torahn"]},
+    {en:"Vad heter kristendomens heliga bok?",sv:"Bibeln",w:["Koranen","Vedan"]},
+    {en:"Vad kallas en ö omgiven av vatten på alla sidor?",sv:"Ö",w:["Halvö","Udde"]},
+    {en:"Vad är ett land utan kung som styrs av folket?",sv:"Republik",w:["Monarki","Diktatur"]},
+    {en:"Vad kallas en stor flod i Sverige?",sv:"Dalälven",w:["Nilen","Rhen"]}
+  ]},
+  3:{badge:"🦋 SO Åk 3",dark:false,words:[
+    {en:"Vad hette vikingarna känd för?",sv:"Sjöresor och handel",w:["Byggandet av pyramider","Romarriket"]},
+    {en:"Vilken religion har flest anhängare i världen?",sv:"Kristendom",w:["Islam","Hinduism"]},
+    {en:"Vad kallas jordens nordligaste punkt?",sv:"Nordpolen",w:["Sydpolen","Ekvatorn"]},
+    {en:"Vilket hav ligger mellan Europa och Amerika?",sv:"Atlanten",w:["Stilla havet","Indiska oceanen"]},
+    {en:"Vad kallas floder som rinner ihop?",sv:"Bifloder",w:["Kanaler","Fjordar"]},
+    {en:"Vad är en monarki?",sv:"Land med kung/drottning",w:["Land med president","Diktatur"]},
+    {en:"Vad kallas kristendomens viktigaste högtid?",sv:"Påsk",w:["Ramadan","Diwali"]},
+    {en:"Vad hette kolonisationen?",sv:"Européer tog länder i Afrika/Amerika",w:["Vikingaresor","Korstågen"]},
+    {en:"Vad kallas jordens inre varma lager?",sv:"Manteln",w:["Atmosfären","Jordskorpan"]},
+    {en:"Vad är en grundlag?",sv:"Landets viktigaste lag",w:["En skollag","En trafikregel"]},
+    {en:"Vad kallas den muslimska fastemånaden?",sv:"Ramadan",w:["Eid","Hajj"]},
+    {en:"Vad är riksdagen?",sv:"Sveriges parlament",w:["Regeringen","Domstolen"]},
+    {en:"Vilken kontinent har Sahara?",sv:"Afrika",w:["Asien","Sydamerika"]},
+    {en:"Vad kallas en halvö?",sv:"Land omgivet av vatten på tre sidor",w:["En ö","En udde"]},
+    {en:"Vad heter den hinduistiska festligheten med ljus?",sv:"Diwali",w:["Eid","Holi"]},
+    {en:"Vad var stenåldern?",sv:"Tid då man använde stenverktyg",w:["Medeltiden","Industrialism"]},
+    {en:"Vad kallas det när ett land styrs av en diktator?",sv:"Diktatur",w:["Demokrati","Monarki"]},
+    {en:"Vad är en symbol för Sverige?",sv:"Tre kronor",w:["Björnen","Eken"]},
+    {en:"Vad kallas ett lands gräns mot ett annat?",sv:"Landsgräns",w:["Kustlinje","Bergskedja"]},
+    {en:"Vad heter det system där alla betalar skatt för vård?",sv:"Välfärd",w:["Kapitalism","Marknad"]}
+  ]},
+  4:{badge:"🦊 SO Åk 4",dark:false,words:[
+    {en:"När grundades Sverige som rike?",sv:"Cirka 1000-talet",w:["500-talet","1500-talet"]},
+    {en:"Vad hette Gustav Vasas viktigaste reform?",sv:"Reformationen",w:["Industrialisering","Demokratisering"]},
+    {en:"Vilket land är störst i Sydamerika?",sv:"Brasilien",w:["Argentina","Colombia"]},
+    {en:"Vad kallas det när jordskorpan rör sig?",sv:"Jordbävning",w:["Tsunami","Orkan"]},
+    {en:"Vad är riksdagens uppgift?",sv:"Stifta lagar",w:["Driva sjukhus","Utbilda barn"]},
+    {en:"Vad heter de fem pelarna i islam?",sv:"Trosbekännelse, bön, fasta, allmosor, pilgrimsfärd",w:["Tio budord","Fyra sanningar"]},
+    {en:"Vad kallas klimatskillnaden norr/söder?",sv:"Klimatzoner",w:["Tidszoner","Vegetationszoner"]},
+    {en:"Vad är Amnesty International?",sv:"Organisation för mänskliga rättigheter",w:["Miljöorganisation","Idrottsförbund"]},
+    {en:"Vilken flod är längst i världen?",sv:"Nilen",w:["Amazonas","Yangtze"]},
+    {en:"Vad kallas det när skog skövlas?",sv:"Avskogning",w:["Erosion","Urbanisering"]},
+    {en:"Vad hände under franska revolutionen?",sv:"Kung avsattes, folket tog makten",w:["Napoleon erövrade Europa","England industrialiserades"]},
+    {en:"Vad är ett biome?",sv:"Stort naturområde med liknande klimat",w:["En sjö","En stad"]},
+    {en:"Vad kallas judendomens sabbat?",sv:"Lördag (Shabbat)",w:["Fredag","Söndag"]},
+    {en:"Vad heter Asiens längsta bergskedja?",sv:"Himalaya",w:["Alperna","Anderna"]},
+    {en:"Vad är ett land med bara en religion?",sv:"Teokrati",w:["Demokrati","Monarki"]},
+    {en:"Vad kallas det när folk lämnar landsbygden för städer?",sv:"Urbanisering",w:["Migration","Globalisering"]},
+    {en:"Vad är Röda korset?",sv:"Humanitär organisation",w:["Politiskt parti","Militärallians"]},
+    {en:"Vad hette Hitlers parti?",sv:"Nationalsocialistiska (nazistpartiet)",w:["Kommunistpartiet","Fascistpartiet"]},
+    {en:"Vad kallas jordens atmosfärslager som skyddar mot UV?",sv:"Ozonskiktet",w:["Troposfären","Magnetosfären"]},
+    {en:"Vad är ett parlament?",sv:"Folkvalda beslutsfattare",w:["Militär ledning","Kungafamilj"]}
+  ]},
+  5:{badge:"🦅 SO Åk 5",dark:false,words:[
+    {en:"Vad orsakade första världskriget?",sv:"Mordet på Franz Ferdinand",w:["Invasionen av Polen","Attentat mot Roosevelt"]},
+    {en:"När slutade andra världskriget?",sv:"1945",w:["1939","1918"]},
+    {en:"Vad är FN:s barnkonvention?",sv:"Alla barns rättigheter",w:["Regler om skola","Regler om miljö"]},
+    {en:"Vad kallas växthuseffekten?",sv:"Jordens temperatur stiger av gaser",w:["Ozonhålet","Surt regn"]},
+    {en:"Vad heter de buddhistiska dygderna?",sv:"Åttagregsvägen",w:["Tio budord","Fem pelarna"]},
+    {en:"Vad är globaliseringen?",sv:"Världen kopplas ihop ekonomiskt",w:["Länderna isolerar sig","Naturen förändras"]},
+    {en:"Vad kallas skillnad i välstånd mellan länder?",sv:"Nordsudsklyftan",w:["Klimatskillnad","Kulturgap"]},
+    {en:"Vad hände under kolonialismen?",sv:"Europeiska länder styrde Afrika/Asien",w:["Asien erövrade Europa","Amerika grundades av vikingar"]},
+    {en:"Vad är mänskliga rättigheter?",sv:"Rättigheter alla människor har",w:["Regler bara för medborgare","Regler för militärer"]},
+    {en:"Vad kallas det när länder handlar med varandra?",sv:"Internationell handel",w:["Diplomati","Migration"]},
+    {en:"Vad är ett veto?",sv:"Rätt att blockera ett beslut",w:["Rösta ja","Kräva omröstning"]},
+    {en:"Vilken religion uppstod i Indien?",sv:"Hinduism och buddhism",w:["Kristendom och islam","Judendom och zoroastrism"]},
+    {en:"Vad heter jordens inre flytande järnkärna?",sv:"Yttre kärnan",w:["Manteln","Litosfären"]},
+    {en:"Vad är en tsunamis orsak?",sv:"Jordbävning under hav",w:["Orkan","Vulkanutbrott"]},
+    {en:"Vad kallas det när en art dör ut?",sv:"Utrotning",w:["Migration","Mutation"]},
+    {en:"Vad hände under industrialiseringen?",sv:"Maskiner ersatte handarbete",w:["Demokrati infördes","Kolonier befriades"]},
+    {en:"Vad är NATO?",sv:"Militärallians i väst",w:["Handelsorganisation","Miljöorganisation"]},
+    {en:"Vad kallas det när ett folk drivas ut från sitt land?",sv:"Etnisk rensning/folkmord",w:["Migration","Asyl"]},
+    {en:"Vad heter världens folkrikaste land?",sv:"Indien (nu)",w:["Kina","USA"]},
+    {en:"Vad kallas ett land med extremt hög levnadsstandard?",sv:"Höginkomstland",w:["Utvecklingsland","Halvland"]}
+  ]},
+  6:{badge:"⚡ SO Åk 6",dark:true,words:[
+    {en:"Vad är en konstitution?",sv:"Grundlag som styr landet",w:["En internationell traktat","En ekonomisk plan"]},
+    {en:"Vad innebär suveränitet?",sv:"Landet styr sig självt",w:["Landet tillhör ett annat","Landet saknar lagar"]},
+    {en:"Vad är skillnaden mellan klimat och väder?",sv:"Klimat är mönster, väder är dagligt",w:["Klimat är kortvarigt, väder långvarigt","De är samma sak"]},
+    {en:"Vad kallas det ekonomiska systemet i Sverige?",sv:"Blandekonomi",w:["Kommunism","Libertarianism"]},
+    {en:"Vad hände under apartheid i Sydafrika?",sv:"Rasskillnader lagstiftades",w:["Kolonin befriades","Demokrati inrättades"]},
+    {en:"Vad är Kyotoprotokollet?",sv:"Avtal om att minska utsläpp",w:["Avtal om frihandel","Avtal om mänskliga rättigheter"]},
+    {en:"Vad kallas ett ekonomiskt system där staten äger allt?",sv:"Kommunism",w:["Kapitalism","Liberalism"]},
+    {en:"Vad är antisemitism?",sv:"Hat mot judar",w:["Hat mot muslimer","Hat mot kristna"]},
+    {en:"Vad orsakade kalla kriget?",sv:"Konflikt USA vs Sovjet",w:["Andra världskriget","Koreakriget"]},
+    {en:"Vad är en sekulär stat?",sv:"Staten är skild från religion",w:["Staten styrs av kyrkan","Staten saknar lagar"]},
+    {en:"Vad heter processen då Afrika befriades från kolonier?",sv:"Avkolonisering",w:["Industrialisering","Urbanisering"]},
+    {en:"Vad kallas ett lands bruttonationalprodukt?",sv:"BNP — ekonomisk storlek",w:["Statsskuld","Valutareserv"]},
+    {en:"Vad är ett vattendelas?",sv:"Gräns mellan flodernas avrinningsområden",w:["En sjö på hög höjd","En kanal"]},
+    {en:"Vad innebär begreppet hållbar utveckling?",sv:"Möta behov utan att skada framtiden",w:["Snabb ekonomisk tillväxt","Bevara gamla traditioner"]},
+    {en:"Vad hände under franska revolutionen 1789?",sv:"Kungen avrättades och republik utropades",w:["Napoleon kröntes till kejsare","Frankrike invaderade England"]},
+    {en:"Vad är en theokrati?",sv:"Landet styrs av religiösa lagar",w:["Landet styrs av militär","Landet är demokrati"]},
+    {en:"Vad kallas processen när is smälter vid polerna?",sv:"Arktisk / glacial avsmältning",w:["Erosion","Sedimentering"]},
+    {en:"Vad innebär begreppet migration?",sv:"Folk flyttar mellan länder",w:["Folk byter religion","Folk byter yrke"]},
+    {en:"Vad är EU-parlamentet?",sv:"Folkvalda ledamöter från EU-länder",w:["EU:s regering","EU:s domstol"]},
+    {en:"Vad kallas jordens plattektonik?",sv:"Rörliga plattor som formar kontinenter",w:["Jordrotation","Magnetfält"]}
+  ]}
+};
+
 const GOAL=20;
 let lvl=1,score=0,locked=false,soundOn=true,usedIdx=[];
 let audioCtx=null;
@@ -885,7 +1029,7 @@ function sndClick(){tone(600,'sine',.06,.14);}
 function sndFaint(){tone(300,'sawtooth',.08,.25);tone(200,'sawtooth',.15,.22,.07);tone(120,'sawtooth',.25,.18,.18);}
 
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
-const isDark=()=>(subject==='eng'?BANKS[lvl]:subject==='mat'?MATH_BANKS[lvl]:CLOCK_BANKS[lvl]).dark;
+const isDark=()=>(subject==='eng'?BANKS[lvl]:subject==='mat'?MATH_BANKS[lvl]:subject==='clk'?CLOCK_BANKS[lvl]:SO_BANKS[lvl]).dark;
 
 // ── THEME ──
 function applyTheme(){
@@ -1092,14 +1236,18 @@ const CLK_DESCS = [
   'Hela timmar','Halv- och<br>heltimmar','Kvart i &amp;<br>kvart över',
   'Fem-minutshopp','Alla minuter<br>0–59','Analog+digital<br>blandad'
 ];
+const SO_DESCS = [
+  'Närmiljö &amp;<br>Sverige','Norden &amp;<br>världen','Historia &amp;<br>religion',
+  'Geografi &amp;<br>samhälle','Världspolitik<br>&amp; miljö','Fördjupning<br>SO'
+];
 
 function pickSubject(subj){
   sndClick();
   subject = subj;
-  const titles = {eng:'🇬🇧 Engelska', mat:'🔢 Matematik', clk:'🕐 Klockan'};
+  const titles = {eng:'🇬🇧 Engelska', mat:'🔢 Matematik', clk:'🕐 Klockan', so:'🌍 SO'};
   document.getElementById('lvlTitle').textContent = titles[subj];
   document.getElementById('lvlSub').textContent   = subj==='clk' ? 'Välj svårighetsgrad!' : 'Välj din årskurs!';
-  const descs = subj==='eng' ? ENG_DESCS : subj==='mat' ? MAT_DESCS : CLK_DESCS;
+  const descs = subj==='eng' ? ENG_DESCS : subj==='mat' ? MAT_DESCS : subj==='clk' ? CLK_DESCS : SO_DESCS;
   for(let i=1;i<=6;i++) document.getElementById('ds'+i).innerHTML = descs[i-1];
   // Update level card icons/names for clock
   const icos = subj==='clk'
@@ -1108,6 +1256,7 @@ function pickSubject(subj){
   const nms = subj==='clk'
     ? ['Nivå 1','Nivå 2','Nivå 3','Nivå 4','Nivå 5','Nivå 6']
     : ['Åk 1','Åk 2','Åk 3','Åk 4','Åk 5','Åk 6'];
+  // SO level 6 always dark style; clk level 6 already handled
   document.querySelectorAll('#lvlCards .lc').forEach((c,i)=>{
     c.querySelector('.ico').textContent = icos[i];
     c.querySelector('.nm').textContent  = nms[i];
@@ -1116,7 +1265,7 @@ function pickSubject(subj){
   });
   // Last card dark style for clock level 6 and eng level 6
   const last = document.querySelector('#lvlCards .lc:last-child');
-  if(subj==='eng'||subj==='clk'){
+  if(subj==='eng'||subj==='clk'||subj==='so'){
     last.querySelector('.nm').style.color='#e879f9';
     last.querySelector('.ds').style.color='#d8b4fe';
   }
@@ -1147,7 +1296,7 @@ function startLevel(n){
   setHp('enemy',enemyHp,enemy.maxHp);
   setHp('player',playerHp,PLAYER.maxHp);
 
-  const bank = subject==='eng' ? BANKS[n] : subject==='mat' ? MATH_BANKS[n] : CLOCK_BANKS[n];
+  const bank = subject==='eng' ? BANKS[n] : subject==='mat' ? MATH_BANKS[n] : subject==='clk' ? CLOCK_BANKS[n] : SO_BANKS[n];
   document.getElementById('lvBadge').textContent=bank.badge;
 
   // Show/hide word-card vs clock-card
@@ -1166,8 +1315,8 @@ function startLevel(n){
   document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('dark-opt',isDark()));
   setMsg('Välj rätt svar för att attackera!');
   if(!isClk){
-    document.getElementById('wordHint').textContent = subject==='eng' ? 'Vad betyder detta ord på svenska?' : 'Räkna ut!';
-    document.getElementById('engWord').className = subject==='eng' ? 'eng-word' : 'eng-word math-q';
+    document.getElementById('wordHint').textContent = subject==='eng' ? 'Vad betyder detta ord på svenska?' : subject==='mat' ? 'Räkna ut!' : 'Välj rätt svar!';
+    document.getElementById('engWord').className = (subject==='eng') ? 'eng-word' : 'eng-word math-q';
   }
   setTimeout(startBattle,60);
   nextQ();
@@ -1181,8 +1330,8 @@ function nextQ(){
   setBubble(isDark()?'Använd Kraften! ⚡':'Välj rätt svar! 💥');
 
   let word;
-  if(subject==='eng'){
-    const bank=BANKS[lvl].words;
+  if(subject==='eng' || subject==='so'){
+    const bank=(subject==='eng'?BANKS:SO_BANKS)[lvl].words;
     if(usedIdx.length>=bank.length) usedIdx=[];
     const avail=bank.map((_,i)=>i).filter(i=>!usedIdx.includes(i));
     const i=avail[Math.floor(Math.random()*avail.length)];
@@ -1291,7 +1440,7 @@ function showWin(lost=false){
     document.getElementById('winIco').textContent=isDark()?'⚡':'🎉';
     document.getElementById('winScr').querySelector('.win-ttl').textContent='SEGER!';
     document.getElementById('winSub').textContent=
-      lvl===6?`${subject==='clk'?'Nivå 6':'Åk 6'} klar! Du är en ${subject==='mat'?'matteguru':subject==='clk'?'klockexpert':'ordmästare'}! 👑`:
+      lvl===6?`${subject==='clk'?'Nivå 6':'Åk 6'} klar! Du är en ${subject==='mat'?'matteguru':subject==='clk'?'klockexpert':subject==='so'?'SO-expert':'ordmästare'}! 👑`:
       `${subject==='clk'?'Nivå':'Åk'} ${lvl} klar! Redo för nästa? 🚀`;
   }
   const nb=document.getElementById('btnNext');
