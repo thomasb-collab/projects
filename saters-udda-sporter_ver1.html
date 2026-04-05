@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Säters Udda Sporter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --white: #f5f0e8;
+    --yellow: #f5d800;
+    --red: #e63312;
+    --concrete: #2a2a2a;
+    --mid: #1a1a1a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    overflow-x: hidden;
+  }
+
+  /* ──── NOISE OVERLAY ──── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ──── HERO ──── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 40%, rgba(245,216,0,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(230,51,18,0.06) 0%, transparent 60%);
+  }
+
+  /* Skating photo collage backdrop */
+  .hero-photos {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+    opacity: 0.18;
+    filter: grayscale(1) contrast(1.4);
+  }
+
+  .hero-photos .photo-slot {
+    background: var(--concrete);
+    overflow: hidden;
+  }
+
+  /* Unsplash skateboarding photos */
+  .p1 { background: url('https://images.unsplash.com/photo-1547447134-cd3f5c716030?w=600&q=80') center/cover; }
+  .p2 { background: url('https://images.unsplash.com/photo-1530028828-5-8c45c5d7add0?w=600&q=80') center/cover; }
+  .p3 { background: url('https://images.unsplash.com/photo-1572731132406-e4d16b26b978?w=600&q=80') center/cover; }
+  .p4 { background: url('https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=600&q=80') center/cover; }
+  .p5 { background: url('https://images.unsplash.com/photo-1566442174-b3c9d4d63f8a?w=600&q=80') center/cover; }
+  .p6 { background: url('https://images.unsplash.com/photo-1531804055935-76f44d7c3621?w=600&q=80') center/cover; }
+  .p7 { background: url('https://images.unsplash.com/photo-1543357480-c60d4c9a2e27?w=600&q=80') center/cover; }
+  .p8 { background: url('https://images.unsplash.com/photo-1547447134-cd3f5c716030?w=600&q=80') center/cover; filter: hue-rotate(180deg); }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.2s;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 18vw, 16rem);
+    line-height: 0.88;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.4s;
+  }
+
+  .hero-title span.accent {
+    color: var(--yellow);
+    display: block;
+  }
+
+  .hero-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.8rem, 2vw, 1.1rem);
+    color: rgba(245,240,232,0.55);
+    margin-top: 2rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.6s;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: rgba(245,240,232,0.3);
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 1s;
+  }
+
+  .scroll-hint::after {
+    content: '';
+    width: 1px;
+    height: 3rem;
+    background: linear-gradient(to bottom, var(--yellow), transparent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ──── TICKER TAPE ──── */
+  .ticker {
+    background: var(--yellow);
+    color: var(--bg);
+    padding: 0.9rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 20s linear infinite;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.1em;
+  }
+
+  .ticker-inner span { margin: 0 2rem; }
+  .ticker-inner .sep { color: var(--red); }
+
+  /* ──── SECTION SHARED ──── */
+  section { padding: clamp(4rem, 8vw, 8rem) clamp(1.5rem, 5vw, 6rem); }
+
+  .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 1;
+    letter-spacing: 0.01em;
+    margin-bottom: 2rem;
+  }
+
+  /* ──── ABOUT ──── */
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+    background: var(--mid);
+  }
+
+  .about-text p {
+    font-size: 1rem;
+    line-height: 1.85;
+    color: rgba(245,240,232,0.75);
+    margin-bottom: 1.5rem;
+  }
+
+  .about-text p:last-child { margin-bottom: 0; }
+
+  .about-visual {
+    position: relative;
+  }
+
+  .big-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(8rem, 18vw, 18rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(245,216,0,0.25);
+    pointer-events: none;
+    user-select: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .stat-box {
+    border: 1px solid rgba(245,216,0,0.2);
+    padding: 2rem 1.5rem;
+    background: rgba(245,216,0,0.03);
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .stat-box:hover {
+    border-color: var(--yellow);
+    background: rgba(245,216,0,0.07);
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--yellow);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.5);
+    margin-top: 0.25rem;
+  }
+
+  /* ──── PARK SECTION ──── */
+  .park { background: var(--bg); }
+
+  .park-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .park-desc {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: rgba(245,240,232,0.6);
+    max-width: 40ch;
+  }
+
+  .zones-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .zone-card {
+    background: var(--concrete);
+    padding: 2.5rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: background 0.3s;
+  }
+
+  .zone-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--yellow);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .zone-card:hover { background: #333; }
+  .zone-card:hover::before { transform: scaleX(1); }
+
+  .zone-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    opacity: 0.9;
+  }
+
+  .zone-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    color: var(--white);
+  }
+
+  .zone-desc {
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: rgba(245,240,232,0.5);
+    letter-spacing: 0.02em;
+  }
+
+  /* ──── SPORTS ──── */
+  .sports { background: var(--mid); }
+
+  .sports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    margin-top: 3rem;
+  }
+
+  .sport-item {
+    background: var(--concrete);
+    padding: 2.5rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sport-item::after {
+    content: attr(data-num);
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(245,240,232,0.06);
+    pointer-events: none;
+  }
+
+  .sport-item:hover { background: #363636; }
+
+  .sport-emoji { font-size: 2.5rem; flex-shrink: 0; }
+
+  .sport-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.03em;
+  }
+
+  .sport-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    display: block;
+    margin-top: 0.25rem;
+  }
+
+  /* ──── HOURS ──── */
+  .hours {
+    background: var(--yellow);
+    color: var(--bg);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .hours .section-title { color: var(--bg); }
+  .hours .label { color: rgba(13,13,13,0.5); }
+
+  .hours-table { width: 100%; border-collapse: collapse; }
+
+  .hours-table tr {
+    border-bottom: 1px solid rgba(13,13,13,0.15);
+  }
+
+  .hours-table tr:last-child { border-bottom: none; }
+
+  .hours-table td {
+    padding: 1.1rem 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hours-table td:last-child {
+    text-align: right;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .hours-note {
+    background: rgba(13,13,13,0.1);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    letter-spacing: 0.03em;
+  }
+
+  .hours-cta {
+    padding: 0.4rem;
+    border: 2px solid var(--bg);
+    display: inline-block;
+    margin-top: 1.5rem;
+  }
+
+  .hours-cta a {
+    display: block;
+    background: var(--bg);
+    color: var(--yellow);
+    padding: 1rem 2.5rem;
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.15em;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .hours-cta a:hover {
+    background: transparent;
+    color: var(--bg);
+  }
+
+  /* ──── RULES ──── */
+  .rules { background: var(--bg); }
+
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 3rem;
+  }
+
+  .rule-item {
+    background: var(--concrete);
+    padding: 2rem;
+    position: relative;
+  }
+
+  .rule-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(245,216,0,0.3);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .rule-text {
+    font-size: 0.85rem;
+    line-height: 1.75;
+    color: rgba(245,240,232,0.65);
+  }
+
+  /* ──── MEMBERSHIP ──── */
+  .membership {
+    background: var(--red);
+    text-align: center;
+    padding: clamp(5rem, 10vw, 10rem) clamp(1.5rem, 5vw, 6rem);
+  }
+
+  .membership .section-title {
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    color: var(--white);
+  }
+
+  .membership p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: rgba(245,240,232,0.8);
+    max-width: 55ch;
+    margin: 1.5rem auto 3rem;
+  }
+
+  .mem-btn {
+    display: inline-block;
+    border: 3px solid var(--white);
+    padding: 0.5rem;
+    text-decoration: none;
+  }
+
+  .mem-btn span {
+    display: block;
+    background: var(--white);
+    color: var(--red);
+    padding: 1.2rem 4rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .mem-btn:hover span {
+    background: transparent;
+    color: var(--white);
+  }
+
+  .mem-price {
+    margin-top: 2rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.5);
+  }
+
+  /* ──── CONTACT ──── */
+  .contact {
+    background: var(--mid);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-info { }
+
+  .contact-detail {
+    border-top: 1px solid rgba(245,240,232,0.1);
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .contact-detail:last-child { border-bottom: 1px solid rgba(245,240,232,0.1); }
+
+  .contact-key {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.4);
+    flex-shrink: 0;
+  }
+
+  .contact-val {
+    font-size: 0.9rem;
+    color: var(--white);
+    text-align: right;
+  }
+
+  .contact-val a {
+    color: var(--yellow);
+    text-decoration: none;
+  }
+
+  .contact-val a:hover { text-decoration: underline; }
+
+  .contact-map {
+    background: var(--concrete);
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-pin-area {
+    text-align: center;
+  }
+
+  .map-bg-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 8rem;
+    color: rgba(245,240,232,0.04);
+    position: absolute;
+    letter-spacing: 0.1em;
+    user-select: none;
+  }
+
+  .map-info {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  .map-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+  .map-addr {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    color: var(--yellow);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .map-city {
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.4);
+  }
+
+  .map-link {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid rgba(245,216,0,0.4);
+    color: var(--yellow);
+    text-decoration: none;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .map-link:hover {
+    border-color: var(--yellow);
+    background: rgba(245,216,0,0.1);
+  }
+
+  /* ──── FOOTER ──── */
+  footer {
+    background: var(--bg);
+    border-top: 1px solid rgba(245,240,232,0.06);
+    padding: 3rem clamp(1.5rem, 5vw, 6rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
+    color: var(--white);
+  }
+
+  .footer-logo span { color: var(--yellow); }
+
+  .footer-copy {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: rgba(245,240,232,0.3);
+    text-transform: uppercase;
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-social a {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-social a:hover { color: var(--yellow); }
+
+  /* ──── DIVIDER ──── */
+  .divider {
+    height: 2px;
+    background: linear-gradient(to right, var(--yellow), var(--red), transparent);
+  }
+
+  /* ──── ANIMATIONS ──── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ──── RESPONSIVE ──── */
+  @media (max-width: 900px) {
+    .about { grid-template-columns: 1fr; gap: 3rem; }
+    .big-number { display: none; }
+    .zones-grid { grid-template-columns: 1fr 1fr; }
+    .sports-grid { grid-template-columns: 1fr; }
+    .hours { grid-template-columns: 1fr; gap: 2.5rem; }
+    .rules-grid { grid-template-columns: 1fr; }
+    .contact { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .zones-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .park-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ──── HERO ──── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-photos">
+    <div class="photo-slot p1"></div>
+    <div class="photo-slot p2"></div>
+    <div class="photo-slot p3"></div>
+    <div class="photo-slot p4"></div>
+    <div class="photo-slot p5"></div>
+    <div class="photo-slot p6"></div>
+    <div class="photo-slot p7"></div>
+    <div class="photo-slot p8"></div>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Säters Udda Sporter — Säter, Dalarna</p>
+    <h1 class="hero-title">
+      Säters<span class="accent">Udda Sporter</span>
+    </h1>
+    <p class="hero-subtitle">Skateboard · BMX · Trick-Kickbike · Inlines</p>
+  </div>
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<!-- ──── TICKER ──── -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span>Välkommen till Pelleparken</span>
+    <span class="sep">✦</span>
+    <span>Öppet Alla Dagar</span>
+    <span class="sep">✦</span>
+    <span>Säter, Dalarna</span>
+    <span class="sep">✦</span>
+    <span>Peppa Varandra – Ha Roligt Tillsammans</span>
+    <span class="sep">✦</span>
+    <span>Byggd 2024 av Beaver Concrete</span>
+    <span class="sep">✦</span>
+    <span>Bli Medlem Idag</span>
+    <span class="sep">✦</span>
+    <span>Välkommen till Pelleparken</span>
+    <span class="sep">✦</span>
+    <span>Öppet Alla Dagar</span>
+    <span class="sep">✦</span>
+    <span>Säter, Dalarna</span>
+    <span class="sep">✦</span>
+    <span>Peppa Varandra – Ha Roligt Tillsammans</span>
+    <span class="sep">✦</span>
+    <span>Byggd 2024 av Beaver Concrete</span>
+    <span class="sep">✦</span>
+    <span>Bli Medlem Idag</span>
+    <span class="sep">✦</span>
+  </div>
+</div>
+
+<!-- ──── ABOUT ──── -->
+<section class="about">
+  <div class="about-text">
+    <p class="label">Om Föreningen</p>
+    <h2 class="section-title">Vi Rullar<br>Tillsammans</h2>
+    <p>Säters Udda Sporter är en ideell förening med hjärtat i Säter, Dalarna. Vi driver Pelleparken – Säters enda skatepark – och samlar åkare i alla åldrar och på alla nivåer under ett tak.</p>
+    <p>Föreningen sätter regler och ordnar events. Parken drivs av oss, för er. Vare sig du åker skateboard, BMX, trick-kickbike eller inlines – du hör hemma här.</p>
+    <p>Vårt motto: <strong style="color:var(--yellow)">Peppa varandra och ha roligt tillsammans.</strong></p>
+  </div>
+  <div class="about-visual">
+    <div class="big-number">24</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-num">2024</div>
+        <div class="stat-label">Parkens Invigning</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">4</div>
+        <div class="stat-label">Sporter Välkomna</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">7–22</div>
+        <div class="stat-label">Öppettider</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Gratis Att Åka</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ──── PARK ──── -->
+<section class="park">
+  <div class="park-header">
+    <div>
+      <p class="label">Pelleparken</p>
+      <h2 class="section-title">Parkens<br>Zoner</h2>
+    </div>
+    <p class="park-desc">En modern betonganläggning byggd av Beaver Concrete. Parken har något för nybörjare och erfarna åkare – från snakrun och streetyta till bowl.</p>
+  </div>
+  <div class="zones-grid">
+    <div class="zone-card">
+      <span class="zone-icon">🐍</span>
+      <div class="zone-name">Snakerun</div>
+      <p class="zone-desc">En slingrande bana som tar dig i flöde. Perfekt för att bygga hastighet och röjsa kurvor. Parken har två snakerun-sektioner.</p>
+    </div>
+    <div class="zone-card">
+      <span class="zone-icon">🏙️</span>
+      <div class="zone-name">Streetyta</div>
+      <p class="zone-desc">Klassiska gatuelement – ledges, rails och flatmark. Här tränar du tricks och grinds i urban miljö.</p>
+    </div>
+    <div class="zone-card">
+      <span class="zone-icon">🌀</span>
+      <div class="zone-name">Bowl</div>
+      <p class="zone-desc">Den dypaste delen av parken. En smooth bowl i betong för den som vill kåpa och pumpa transition.</p>
+    </div>
+    <div class="zone-card">
+      <span class="zone-icon">🌿</span>
+      <div class="zone-name">Grönyta</div>
+      <p class="zone-desc">Parken omges av grönska – perfekt att hänga, vila och peppa kompisar mellan sessionerna.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ──── HOURS ──── -->
+<section class="hours">
+  <div>
+    <p class="label">Öppettider</p>
+    <h2 class="section-title">När Kan<br>Du Åka?</h2>
+    <p style="font-size:0.9rem;line-height:1.8;opacity:0.7;max-width:40ch;margin-top:1rem;">Parken är öppen alla dagar. Notera att erfarna åkare kan åka lite längre på kvällarna.</p>
+    <div class="hours-cta">
+      <a href="https://www.facebook.com/satersuddasporter" target="_blank">Följ Oss På Facebook →</a>
+    </div>
+  </div>
+  <div>
+    <table class="hours-table">
+      <tr>
+        <td>Alla åkare (7–17 år)</td>
+        <td>07:00 – 17:00</td>
+      </tr>
+      <tr>
+        <td>Erfarna åkare (17+)</td>
+        <td>07:00 – 22:00</td>
+      </tr>
+      <tr>
+        <td>Öppet</td>
+        <td>Alla Dagar</td>
+      </tr>
+    </table>
+    <div class="hours-note">
+      ⚠️ Obs: Tider kan ändras. Kolla föreningens Facebook-sida (Säters Udda Sporters) för aktuella tider och event.
+    </div>
+  </div>
+</section>
+
+<!-- ──── RULES ──── -->
+<section class="rules">
+  <p class="label">Regler</p>
+  <h2 class="section-title">Tänk På<br>Det Här</h2>
+  <div class="rules-grid">
+    <div class="rule-item">
+      <div class="rule-num">01</div>
+      <p class="rule-text">Parken är en avancerad idrotts- och aktivitetsyta. All aktivitet sker på <strong style="color:var(--white)">egen risk</strong>.</p>
+    </div>
+    <div class="rule-item">
+      <div class="rule-num">02</div>
+      <p class="rule-text"><strong style="color:var(--white)">Hjälm är obligatoriskt</strong> för åkare under 16 år. Vi uppmanar alla att skydda skallen.</p>
+    </div>
+    <div class="rule-item">
+      <div class="rule-num">03</div>
+      <p class="rule-text">Vårdnadshavare ansvarar för sina barn. Parken är <strong style="color:var(--white)">inte en lekplats</strong> eller sittplats.</p>
+    </div>
+    <div class="rule-item">
+      <div class="rule-num">04</div>
+      <p class="rule-text"><strong style="color:var(--white)">Håll parken ren och fin.</strong> Vi tar hand om vår plats – skräpa inte ner.</p>
+    </div>
+    <div class="rule-item">
+      <div class="rule-num">05</div>
+      <p class="rule-text">Skadegörelse och klotter <strong style="color:var(--white)">polisanmäls</strong> och föreningens medlemmar betalar.</p>
+    </div>
+    <div class="rule-item">
+      <div class="rule-num">06</div>
+      <p class="rule-text">Alla <strong style="color:var(--white)">pegs, handrätag och trampar av plast</strong> – de förstör betongytan och är inte tillåtna.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ──── MEMBERSHIP ──── -->
+<section class="membership">
+  <p class="label" style="color:rgba(245,240,232,0.5)">Föreningen</p>
+  <h2 class="section-title">Bli Medlem</h2>
+  <p>Medlemsavgift är endast <strong>50 kr per person</strong> för ett helt år – eller valfritt högre belopp för att stödja föreningen ytterligare. Som medlem ingår olycksfallsförsäkring i Folksam!</p>
+  <p style="font-size:0.85rem;color:rgba(245,240,232,0.7);margin-top:-0.5rem;margin-bottom:2rem;max-width:55ch;margin-left:auto;margin-right:auto;">Skriv namn och fullständigt personnummer vid betalning så att vi kan få in LOK-stödbidrag.</p>
+
+  <div style="display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem;">
+    <div style="border:2px solid rgba(245,240,232,0.3);padding:1.5rem 2.5rem;text-align:center;">
+      <div style="font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(245,240,232,0.6);margin-bottom:0.5rem;">Bankgiro <span style="color:rgba(245,240,232,0.4);font-size:0.6rem;">(ingen avgift)</span></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.1em;">5568-2827</div>
+    </div>
+    <div style="border:2px solid rgba(245,240,232,0.3);padding:1.5rem 2.5rem;text-align:center;">
+      <div style="font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(245,240,232,0.6);margin-bottom:0.5rem;">Swish</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.1em;">123 070 57 80</div>
+    </div>
+  </div>
+
+  <a href="mailto:foreningensus@gmail.com" class="mem-btn">
+    <span>Kontakta Oss</span>
+  </a>
+  <p class="mem-price">foreningensus@gmail.com · 50 kr / år · Olycksfallsförsäkring ingår</p>
+</section>
+
+<!-- ──── STYRELSE ──── -->
+<section style="background:var(--mid);padding:clamp(4rem,8vw,8rem) clamp(1.5rem,5vw,6rem);">
+  <p class="label">Föreningen</p>
+  <h2 class="section-title">Styrelsen</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;margin-top:3rem;">
+    <div style="background:var(--concrete);padding:2rem 1.5rem;">
+      <div style="font-size:0.6rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--yellow);margin-bottom:0.5rem;">Ordförande</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.05em;">Pelle Evertsson</div>
+    </div>
+    <div style="background:var(--concrete);padding:2rem 1.5rem;">
+      <div style="font-size:0.6rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--yellow);margin-bottom:0.5rem;">Kassör</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.05em;">Sandra Johansson</div>
+    </div>
+    <div style="background:var(--concrete);padding:2rem 1.5rem;">
+      <div style="font-size:0.6rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--yellow);margin-bottom:0.5rem;">Ledamöter</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.05em;line-height:1.4;">Björn Grahn<br>Andreas Löfving<br>Emelie Ekberg</div>
+    </div>
+    <div style="background:var(--concrete);padding:2rem 1.5rem;">
+      <div style="font-size:0.6rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--yellow);margin-bottom:0.5rem;">Suppleanter</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.05em;line-height:1.4;">Oliver Nilsson<br>Leo Nilsson<br>Elina Nilsson<br>Fredrik Berggren</div>
+    </div>
+  </div>
+</section>
+
+<!-- ──── CONTACT ──── -->
+<section class="contact">
+  <div class="contact-info">
+    <p class="label">Hitta Oss</p>
+    <h2 class="section-title" style="font-size:clamp(2.5rem,5vw,4rem)">Kontakt &<br>Adress</h2>
+    <div class="contact-detail">
+      <span class="contact-key">E-post</span>
+      <span class="contact-val"><a href="mailto:foreningensus@gmail.com">foreningensus@gmail.com</a></span>
+    </div>
+    <div class="contact-detail">
+      <span class="contact-key">Facebook</span>
+      <span class="contact-val"><a href="https://facebook.com/satersuddasporter" target="_blank">Säters Udda Sporters</a></span>
+    </div>
+    <div class="contact-detail">
+      <span class="contact-key">Ort</span>
+      <span class="contact-val">Säter, Dalarna</span>
+    </div>
+    <div class="contact-detail">
+      <span class="contact-key">Parkens Namn</span>
+      <span class="contact-val">Pelleparken</span>
+    </div>
+    <div class="contact-detail">
+      <span class="contact-key">Byggd Av</span>
+      <span class="contact-val">Beaver Concrete · 2024</span>
+    </div>
+  </div>
+  <div class="contact-map">
+    <span class="map-bg-text">SÄTER</span>
+    <div class="map-info">
+      <div class="map-icon">📍</div>
+      <div class="map-addr">Pelleparken</div>
+      <div class="map-city">Säter, Dalarna, Sverige</div>
+      <a href="https://maps.google.com/?q=Pelleparken+Säter" target="_blank" class="map-link">Öppna i Google Maps →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ──── FOOTER ──── -->
+<footer>
+  <p class="footer-copy">© 2025 Säters Udda Sporter · Pelleparken · Säter, Dalarna</p>
+  <div class="footer-social">
+    <a href="https://facebook.com/satersuddasporter" target="_blank">Facebook</a>
+    <a href="mailto:foreningensus@gmail.com">E-post</a>
+  </div>
+</footer>
+
+</body>
+</html>
