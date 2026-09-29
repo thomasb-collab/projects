@@ -311,6 +311,54 @@
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
 </div>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCUh-61uIzcN9d9t9uyKclKNDdSmwikMlk",
+    authDomain: "larskogen-f3103.firebaseapp.com",
+    projectId: "larskogen-f3103",
+    storageBucket: "larskogen-f3103.firebasestorage.app",
+    messagingSenderId: "1096023245855",
+    appId: "1:1096023245855:web:b4eda85b3a24cd2d06812a"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  const SCORES_COLLECTION = "skolquest_scores";
+
+  function docIdFor(name){
+    return String(name).trim().replace(/\//g, "-").slice(0, 60) || "Spelare";
+  }
+
+  // Exposed for the classic (non-module) game script below.
+  window.fbGetPlayerScores = async function(name){
+    try{
+      const snap = await getDoc(doc(db, SCORES_COLLECTION, docIdFor(name)));
+      return snap.exists() ? (snap.data().levels || {}) : null;
+    }catch(e){ console.error("Kunde inte hämta poäng från molnet:", e); return null; }
+  };
+
+  window.fbSavePlayerScores = async function(name, levelScoresObj){
+    try{
+      await setDoc(doc(db, SCORES_COLLECTION, docIdFor(name)), {
+        levels: levelScoresObj,
+        updatedAt: Date.now()
+      }, { merge: true });
+    }catch(e){ console.error("Kunde inte spara poäng till molnet:", e); }
+  };
+
+  window.fbGetAllScores = async function(){
+    try{
+      const snap = await getDocs(collection(db, SCORES_COLLECTION));
+      const out = {};
+      snap.forEach(d => { out[d.id] = d.data().levels || {}; });
+      return out;
+    }catch(e){ console.error("Kunde inte hämta topplistan från molnet:", e); return null; }
+  };
+</script>
+
 <script>
 // ---------- LEVEL DATA ----------
 // Word levels: sv can be a single string or array of accepted alternatives
@@ -471,7 +519,7 @@ function showNameScreen(){
   input.onkeydown = (e)=>{ if(e.key==='Enter') submitName(); };
 }
 
-function submitName(){
+async function submitName(){
   let name = document.getElementById('nameInput').value.trim();
   if(!name) name = "Spelare";
   name = name.charAt(0).toUpperCase() + name.slice(1);
@@ -481,6 +529,17 @@ function submitName(){
   savePlayers();
   document.getElementById('nameArea').classList.add('hidden');
   renderHome();
+
+  // Sync with the shared cloud leaderboard, if available.
+  if(window.fbGetPlayerScores){
+    const cloudLevels = await window.fbGetPlayerScores(currentUser);
+    if(cloudLevels && currentUser === name){
+      players[currentUser] = cloudLevels;
+      levelScores = players[currentUser];
+      savePlayers();
+      renderHome();
+    }
+  }
 }
 
 function shuffle(arr){
@@ -533,7 +592,7 @@ function renderHome(){
 
 function goHome(){ renderHome(); }
 
-function goLeaderboard(){
+async function goLeaderboard(){
   document.getElementById('nameArea').classList.add('hidden');
   document.getElementById('homeArea').classList.add('hidden');
   document.getElementById('quizArea').classList.add('hidden');
@@ -542,6 +601,16 @@ function goLeaderboard(){
   document.getElementById('subtitle').textContent = "Vem har flest robux?";
   document.getElementById('bodyEl').className = '';
   renderLeaderboard();
+
+  if(window.fbGetAllScores){
+    document.getElementById('leaderboardList').innerHTML = '<div class="empty-msg">Hämtar topplistan...</div>';
+    const cloud = await window.fbGetAllScores();
+    if(cloud){
+      Object.keys(cloud).forEach(name => { players[name] = cloud[name]; });
+      savePlayers();
+    }
+    renderLeaderboard();
+  }
 }
 
 function renderLeaderboard(){
@@ -846,6 +915,7 @@ function finishLevel(){
   const best = prev ? Math.max(prev.best, score) : score;
   levelScores[currentLevelId] = {last: score, best: best, max: maxScore};
   savePlayers();
+  if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
 
   let emoji, title, text, starCount;
   if(pct >= 0.8){ emoji="🏆👑"; title="LEGENDARY WIN!"; starCount=3;
