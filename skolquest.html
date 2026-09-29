@@ -148,6 +148,58 @@
   .leader-row .lname{flex:1; font-weight:700; min-width:0; word-break:break-word;}
   .leader-row .lscore{font-weight:800; color:var(--accent2); white-space:nowrap;}
   .empty-msg{text-align:center; opacity:0.6; padding:20px 0;}
+  .champion-card{
+    position:relative;
+    text-align:center;
+    background:linear-gradient(135deg, rgba(255,209,102,0.18), rgba(0,229,255,0.12));
+    border:3px solid var(--accent2);
+    border-radius:20px;
+    padding:30px 16px 22px;
+    margin-bottom:18px;
+    overflow:hidden;
+    animation:championGlow 2.5s ease-in-out infinite;
+  }
+  .champion-card.me{border-color:var(--accent);}
+  .champion-card .crown{
+    font-size:2em; position:absolute; top:2px; left:50%;
+    transform:translateX(-50%);
+    animation:crownBob 2s ease-in-out infinite;
+  }
+  .champion-card .avatar-big{
+    font-size:5em; line-height:1; margin-top:14px;
+    display:inline-block;
+    animation:floatBounce 2.2s ease-in-out infinite;
+    filter:drop-shadow(0 0 18px var(--accent2));
+  }
+  .champion-card .cname{font-weight:900; font-size:1.3em; margin-top:10px;}
+  .champion-card .cscore{
+    font-weight:800; color:var(--accent2); font-size:1.7em; margin-top:4px;
+    text-shadow:0 0 14px rgba(255,209,102,0.6);
+  }
+  .champion-card .sparkle{
+    position:absolute; font-size:1.4em; opacity:0.85;
+    animation:sparkleFloat 3s ease-in-out infinite;
+  }
+  .champion-card .sparkle.s1{top:14%; left:8%; animation-delay:0s;}
+  .champion-card .sparkle.s2{top:18%; right:10%; animation-delay:0.6s;}
+  .champion-card .sparkle.s3{bottom:14%; left:12%; animation-delay:1.2s;}
+  .champion-card .sparkle.s4{bottom:18%; right:8%; animation-delay:1.8s;}
+  @keyframes floatBounce{
+    0%,100%{ transform:translateY(0) rotate(-3deg); }
+    50%{ transform:translateY(-12px) rotate(3deg); }
+  }
+  @keyframes crownBob{
+    0%,100%{ transform:translateX(-50%) translateY(0) rotate(-8deg); }
+    50%{ transform:translateX(-50%) translateY(-5px) rotate(8deg); }
+  }
+  @keyframes sparkleFloat{
+    0%,100%{ transform:translateY(0) scale(1); opacity:0.5; }
+    50%{ transform:translateY(-10px) scale(1.3); opacity:1; }
+  }
+  @keyframes championGlow{
+    0%,100%{ box-shadow:0 0 20px rgba(255,209,102,0.3); }
+    50%{ box-shadow:0 0 38px rgba(255,209,102,0.75); }
+  }
   .admin-row{
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     background:linear-gradient(135deg,#1c2559,#131a3f);
@@ -848,17 +900,40 @@ function renderLeaderboard(){
     list.innerHTML = '<div class="empty-msg">Ingen har spelat än — var först! 🚀</div>';
     return;
   }
-  rows.forEach((r,i)=>{
-    const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `${i+1}.`;
-    const div = document.createElement('div');
-    div.className = 'leader-row' + (r.name === currentUser ? ' me' : '');
-    div.innerHTML = `
-      <div class="rank">${medal}</div>
-      <div class="lname">${avatarFor(r.name)} ${r.name}${r.name === currentUser ? ' (du)' : ''}</div>
-      <div class="lscore">${r.total} 🪙</div>
-    `;
-    list.appendChild(div);
-  });
+
+  const champ = rows[0];
+  const champDiv = document.createElement('div');
+  champDiv.className = 'champion-card' + (champ.name === currentUser ? ' me' : '');
+  champDiv.innerHTML = `
+    <div class="sparkle s1">✨</div>
+    <div class="sparkle s2">⭐</div>
+    <div class="sparkle s3">🎉</div>
+    <div class="sparkle s4">✨</div>
+    <div class="crown">👑</div>
+    <div class="avatar-big">${avatarFor(champ.name)}</div>
+    <div class="cname">${champ.name}${champ.name === currentUser ? ' (du)' : ''}</div>
+    <div class="cscore">${champ.total} 🪙</div>
+  `;
+  list.appendChild(champDiv);
+
+  const rest = rows.slice(1);
+  if(rest.length){
+    const restWrap = document.createElement('div');
+    rest.forEach((r,i)=>{
+      const rank = i + 2;
+      const medal = rank===2 ? '🥈' : rank===3 ? '🥉' : `${rank}.`;
+      const div = document.createElement('div');
+      div.className = 'leader-row' + (r.name === currentUser ? ' me' : '');
+      div.innerHTML = `
+        <div class="rank">${medal}</div>
+        <div class="lname">${avatarFor(r.name)} ${r.name}${r.name === currentUser ? ' (du)' : ''}</div>
+        <div class="lscore">${r.total} 🪙</div>
+      `;
+      restWrap.appendChild(div);
+    });
+    list.appendChild(restWrap);
+  }
+  return;
 }
 
 // ---------- MATH FACT GENERATION ----------
