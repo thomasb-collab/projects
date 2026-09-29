@@ -133,6 +133,20 @@
   .leader-row .lname{flex:1; font-weight:700; min-width:0; word-break:break-word;}
   .leader-row .lscore{font-weight:800; color:var(--accent2); white-space:nowrap;}
   .empty-msg{text-align:center; opacity:0.6; padding:20px 0;}
+  .admin-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; border-radius:12px;
+    padding:12px 14px; margin-bottom:10px;
+  }
+  .admin-row .aname{font-weight:700; flex:1; min-width:80px; word-break:break-word;}
+  .admin-row .ascore{font-weight:800; color:var(--accent2); white-space:nowrap;}
+  .admin-row .abtns{display:flex; gap:6px; width:100%;}
+  .admin-row .abtns button{
+    flex:1; padding:8px; border-radius:8px; font-size:0.85em; cursor:pointer;
+    border:1px solid #3a4590; background:rgba(255,255,255,0.05); color:var(--text);
+  }
+  .admin-row .abtns .danger{border-color:var(--danger); color:#ff9aa2;}
   /* ---------- QUIZ ---------- */
   .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.9em; gap:8px; flex-wrap:wrap;}
   .robux{
@@ -261,6 +275,18 @@
       <div id="leaderboardList"></div>
     </div>
 
+    <!-- ADMIN -->
+    <div id="adminArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">⚙️ Admin</div>
+        <button class="backbtn" onclick="refreshAdmin()">🔄</button>
+      </div>
+      <div class="section-lbl" style="margin-top:0;">Spelare</div>
+      <div id="adminList"></div>
+      <button class="menu-btn" style="width:100%; background:linear-gradient(135deg,#8b1e1e,#4a0f0f); margin-top:10px;" onclick="adminResetAll()">🗑️ Nollställ alla spelare</button>
+    </div>
+
     <!-- QUIZ -->
     <div id="quizArea" class="hidden">
       <div class="topbar">
@@ -309,11 +335,14 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
+  <div style="text-align:center; margin-top:8px;">
+    <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
+  </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, getDocs, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCUh-61uIzcN9d9t9uyKclKNDdSmwikMlk",
@@ -356,6 +385,18 @@
       snap.forEach(d => { out[d.id] = d.data().levels || {}; });
       return out;
     }catch(e){ console.error("Kunde inte hämta topplistan från molnet:", e); return null; }
+  };
+
+  window.fbResetPlayer = async function(name){
+    try{
+      await setDoc(doc(db, SCORES_COLLECTION, docIdFor(name)), { levels: {}, updatedAt: Date.now() });
+    }catch(e){ console.error("Kunde inte nollställa spelare i molnet:", e); }
+  };
+
+  window.fbDeletePlayer = async function(name){
+    try{
+      await deleteDoc(doc(db, SCORES_COLLECTION, docIdFor(name)));
+    }catch(e){ console.error("Kunde inte ta bort spelare i molnet:", e); }
   };
 </script>
 
@@ -496,6 +537,8 @@ function showNameScreen(){
   document.getElementById('homeArea').classList.add('hidden');
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('bodyEl').className = '';
   document.getElementById('subtitle').textContent = "Vem ska öva idag?";
 
@@ -558,6 +601,8 @@ function renderHome(){
   document.getElementById('homeArea').classList.remove('hidden');
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('subtitle').textContent = "Välj nivå och samla robux!";
   document.getElementById('bodyEl').className = '';
   document.getElementById('playerName').textContent = currentUser;
@@ -592,11 +637,106 @@ function renderHome(){
 
 function goHome(){ renderHome(); }
 
+// ---------- ADMIN ----------
+const ADMIN_PIN = "4040"; // byt gärna denna kod i filen om du vill ha en annan
+
+function openAdminPrompt(){
+  const pin = prompt("Ange admin-PIN:");
+  if(pin === null) return;
+  if(pin === ADMIN_PIN){ goAdmin(); }
+  else{ alert("Fel PIN."); }
+}
+
+async function goAdmin(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Hantera spelare";
+  document.getElementById('bodyEl').className = '';
+  await refreshAdmin();
+}
+
+async function refreshAdmin(){
+  document.getElementById('adminList').innerHTML = '<div class="empty-msg">Hämtar spelare...</div>';
+  if(window.fbGetAllScores){
+    const cloud = await window.fbGetAllScores();
+    if(cloud){
+      players = cloud; // cloud is the source of truth for the admin view
+      savePlayers();
+    }
+  }
+  renderAdminList();
+}
+
+function renderAdminList(){
+  const names = Object.keys(players);
+  const list = document.getElementById('adminList');
+  list.innerHTML = '';
+  if(names.length === 0){
+    list.innerHTML = '<div class="empty-msg">Inga spelare ännu.</div>';
+    return;
+  }
+  const rows = names.map(name=>{
+    let total = 0;
+    levels.forEach(lvl=>{ const s = players[name][lvl.id]; if(s) total += s.best; });
+    return {name, total};
+  }).sort((a,b)=> b.total - a.total);
+
+  rows.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'admin-row';
+    div.innerHTML = `
+      <div class="aname">${r.name}</div>
+      <div class="ascore">${r.total} 🪙</div>
+      <div class="abtns">
+        <button onclick="adminResetPlayer('${r.name.replace(/'/g,"\\'")}')">Nollställ</button>
+        <button class="danger" onclick="adminDeletePlayer('${r.name.replace(/'/g,"\\'")}')">Ta bort</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+async function adminResetPlayer(name){
+  if(!confirm(`Nollställ alla poäng för ${name}?`)) return;
+  players[name] = {};
+  if(name === currentUser) levelScores = players[currentUser];
+  savePlayers();
+  if(window.fbResetPlayer) await window.fbResetPlayer(name);
+  renderAdminList();
+}
+
+async function adminDeletePlayer(name){
+  if(!confirm(`Ta bort ${name} helt, inklusive alla poäng?`)) return;
+  delete players[name];
+  if(name === currentUser){ players[currentUser] = {}; levelScores = players[currentUser]; }
+  savePlayers();
+  if(window.fbDeletePlayer) await window.fbDeletePlayer(name);
+  renderAdminList();
+}
+
+async function adminResetAll(){
+  if(!confirm("Nollställ och ta bort ALLA spelare? Detta går inte att ångra.")) return;
+  if(!confirm("Helt säker? Alla poäng för alla barn försvinner nu.")) return;
+  const names = Object.keys(players);
+  for(const name of names){
+    if(window.fbDeletePlayer) await window.fbDeletePlayer(name);
+  }
+  players = {};
+  currentUser = null;
+  savePlayers();
+  renderAdminList();
+}
+
 async function goLeaderboard(){
   document.getElementById('nameArea').classList.add('hidden');
   document.getElementById('homeArea').classList.add('hidden');
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.remove('hidden');
   document.getElementById('subtitle').textContent = "Vem har flest robux?";
   document.getElementById('bodyEl').className = '';
