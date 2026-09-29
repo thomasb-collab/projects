@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Skolquest</title>
+<style>
+  :root{
+    --bg1:#0b1020;
+    --bg2:#1a2140;
+    --accent:#00e5ff;
+    --accent2:#7cff00;
+    --danger:#ff4757;
+    --panel:#12183a;
+    --text:#f0f4ff;
+  }
+  body.level-2{ --accent:#c26bff; --accent2:#ffd166; }
+  body.level-3{ --accent:#ff8c42; --accent2:#ffe66d; }
+  body.level-4{ --accent:#2dd4bf; --accent2:#fbbf24; }
+  body.level-5{ --accent:#38bdf8; --accent2:#f472b6; }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    min-height:100dvh;
+    font-family:'Segoe UI', Verdana, sans-serif;
+    background:
+      radial-gradient(circle at 20% 20%, #223066 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, #2a1f5e 0%, transparent 40%),
+      linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    padding-top:calc(20px + env(safe-area-inset-top));
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+    padding-left:calc(20px + env(safe-area-inset-left));
+    padding-right:calc(20px + env(safe-area-inset-right));
+    transition:background 0.4s;
+  }
+  .wrap{width:100%; max-width:520px;}
+  h1{
+    text-align:center;
+    font-size:clamp(1.2em, 5vw, 1.6em);
+    margin:0 0 4px;
+    letter-spacing:1px;
+    color:var(--accent2);
+    text-shadow:0 0 10px rgba(124,255,0,0.5);
+  }
+  .sub{text-align:center; opacity:0.75; margin-bottom:18px; font-size:0.9em;}
+  .card{
+    background:var(--panel);
+    border:3px solid var(--accent);
+    border-radius:18px;
+    box-shadow:0 0 25px rgba(0,229,255,0.25), inset 0 0 30px rgba(0,229,255,0.05);
+    padding:clamp(16px, 5vw, 24px);
+    position:relative;
+    overflow:hidden;
+    width:100%;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:-40px; right:-40px;
+    width:120px;height:120px;
+    background:conic-gradient(var(--accent2),var(--accent),var(--accent2));
+    opacity:0.15;
+    border-radius:30% 70% 60% 40%;
+  }
+  /* ---------- HOME / LEVEL SELECT ---------- */
+  .total-box{
+    text-align:center;
+    background:linear-gradient(135deg,#1e2b55,#101635);
+    border:1px solid var(--accent);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:18px;
+  }
+  .total-box .num{font-size:2em; font-weight:900; color:var(--accent2); text-shadow:0 0 12px rgba(124,255,0,0.5);}
+  .total-box .lbl{font-size:0.8em; opacity:0.75; letter-spacing:1px; text-transform:uppercase;}
+  .levels{display:grid; gap:14px;}
+  .level-card{
+    display:flex; align-items:center; gap:14px;
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; border-radius:14px; padding:16px;
+    cursor:pointer; transition:transform 0.15s, border-color 0.2s;
+    text-align:left; -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .level-card:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .level-card .icon{
+    font-size:2.2em; width:56px; height:56px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); border-radius:12px; flex-shrink:0;
+  }
+  .level-card .info{flex:1; min-width:0;}
+  .level-card .info .name{font-weight:800; font-size:1.05em;}
+  .level-card .info .meta{font-size:0.85em; opacity:0.7; margin-top:2px;}
+  .level-card .score{font-weight:800; color:var(--accent2); font-size:1.1em; white-space:nowrap;}
+  .section-lbl{font-size:0.8em; opacity:0.55; letter-spacing:1px; text-transform:uppercase; margin:16px 0 8px;}
+  /* ---------- NAME SCREEN ---------- */
+  .name-box{text-align:center;}
+  .name-box .emoji{font-size:2.6em; margin-bottom:6px;}
+  .name-box input[type=text]{
+    width:100%; text-align:center; font-size:18px; margin:14px 0;
+  }
+  .quick-players{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:6px;}
+  .quick-players button{
+    background:rgba(255,255,255,0.06); border:1px solid #3a4590; color:var(--text);
+    border-radius:20px; padding:8px 14px; font-size:0.9em; cursor:pointer;
+  }
+  .quick-players button:hover{border-color:var(--accent);}
+  .quick-lbl{font-size:0.75em; opacity:0.55; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1px;}
+  .player-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(255,255,255,0.05); border:1px solid #3a4590; border-radius:12px;
+    padding:8px 12px; margin-bottom:14px; font-size:0.95em;
+  }
+  .player-bar .who{font-weight:800; color:var(--accent2);}
+  .player-bar button{
+    background:none; border:1px solid #3a4590; color:var(--text);
+    border-radius:8px; padding:5px 10px; font-size:0.85em; cursor:pointer;
+  }
+  .leader-row{
+    display:flex; align-items:center; gap:12px;
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; border-radius:12px;
+    padding:12px 14px; margin-bottom:10px;
+  }
+  .leader-row.me{border-color:var(--accent); box-shadow:0 0 12px rgba(0,229,255,0.25);}
+  .leader-row .rank{font-size:1.2em; font-weight:800; width:32px; text-align:center; flex-shrink:0;}
+  .leader-row .lname{flex:1; font-weight:700; min-width:0; word-break:break-word;}
+  .leader-row .lscore{font-weight:800; color:var(--accent2); white-space:nowrap;}
+  .empty-msg{text-align:center; opacity:0.6; padding:20px 0;}
+  /* ---------- QUIZ ---------- */
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.9em; gap:8px; flex-wrap:wrap;}
+  .robux{
+    background:linear-gradient(135deg,#1e2b55,#101635);
+    border:1px solid var(--accent); border-radius:10px; padding:6px 12px;
+    display:flex; align-items:center; gap:6px; font-weight:bold; color:var(--accent2);
+  }
+  .backbtn{background:none; border:1px solid #3a4590; color:var(--text); border-radius:10px; padding:6px 10px; font-size:0.9em; cursor:pointer;}
+  .progress-track{height:10px; background:#0a0e24; border-radius:6px; overflow:hidden; margin-bottom:20px; border:1px solid #333c6e;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); width:0%; transition:width 0.4s ease;}
+  .word-box{text-align:center; margin-bottom:22px;}
+  .word-label{font-size:0.85em; opacity:0.6; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;}
+  .word{font-size:clamp(1.6em, 8vw, 2.4em); font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,229,255,0.6); word-break:break-word;}
+  .options{display:grid; gap:10px;}
+  .opt-btn{
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; color:var(--text);
+    padding:14px; min-height:48px; border-radius:12px;
+    font-size:16px; cursor:pointer;
+    transition:transform 0.1s, border-color 0.2s, background 0.2s;
+    text-align:left; -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .opt-btn:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .opt-btn.correct{background:linear-gradient(135deg,#1c5d2a,#0f3018); border-color:var(--accent2); box-shadow:0 0 15px rgba(124,255,0,0.5);}
+  .opt-btn.wrong{background:linear-gradient(135deg,#5d1c1c,#300f0f); border-color:var(--danger);}
+  .type-row{display:flex; gap:8px; flex-wrap:wrap;}
+  input[type=text]{
+    flex:1; min-width:0; padding:14px; font-size:16px; border-radius:12px;
+    border:2px solid #3a4590; background:#0a0e24; color:#fff; min-height:48px;
+    -webkit-appearance:none; appearance:none;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--accent);}
+  .go-btn, .next-btn, .restart-btn, .menu-btn{
+    background:linear-gradient(135deg,var(--accent2),#3fbf00);
+    color:#08130a; border:none; font-weight:800;
+    padding:14px 18px; min-height:48px; border-radius:12px;
+    cursor:pointer; font-size:16px;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .menu-btn{background:linear-gradient(135deg,#3a4590,#20265c); color:#fff; margin-top:8px;}
+  .go-btn{flex:0 0 auto;}
+  @media (max-width:380px){ .type-row{flex-direction:column;} .go-btn{width:100%;} }
+  .feedback{margin-top:14px; text-align:center; font-size:1.1em; font-weight:bold; min-height:1.4em;}
+  .feedback.ok{color:var(--accent2);}
+  .feedback.bad{color:var(--danger);}
+  .next-wrap{text-align:center; margin-top:16px;}
+  .hidden{display:none;}
+  .result{text-align:center;}
+  .result .big{font-size:2.6em; margin:10px 0;}
+  .result p{opacity:0.85;}
+  .streak{text-align:center; font-size:0.9em; margin-top:10px; opacity:0.8;}
+  .stars{font-size:1.6em; margin:6px 0;}
+  .noggin{font-size:0.75em; text-align:center; opacity:0.4; margin-top:16px;}
+  .story-box{
+    background:rgba(255,255,255,0.05);
+    border:1px solid #3a4590;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:16px;
+    max-height:min(52vh, 420px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .story-box p{
+    font-size:1.05em;
+    line-height:1.55;
+    margin:0 0 12px;
+  }
+  .story-box p:last-child{margin-bottom:0;}
+  .story-title{
+    text-align:center;
+    font-weight:800;
+    font-size:0.9em;
+    letter-spacing:1px;
+    opacity:0.75;
+    margin-bottom:10px;
+    text-transform:uppercase;
+  }
+</style>
+</head>
+<body id="bodyEl">
+<div class="wrap">
+  <h1>🟩 SKOLQUEST 🟦</h1>
+  <div class="sub" id="subtitle">Välj nivå och samla robux!</div>
+
+  <div class="card">
+
+    <!-- NAME ENTRY -->
+    <div id="nameArea" class="name-box">
+      <div class="emoji">🙋</div>
+      <div>Vem spelar?</div>
+      <input type="text" id="nameInput" placeholder="Skriv ditt namn..." autocomplete="off" autocapitalize="words" maxlength="20">
+      <button class="go-btn" onclick="submitName()" style="width:100%;">Kör igång! 🚀</button>
+      <div id="quickPlayersWrap"></div>
+    </div>
+
+    <!-- HOME / LEVEL SELECT -->
+    <div id="homeArea" class="hidden">
+      <div class="player-bar">
+        <div>Spelar som: <span class="who" id="playerName"></span></div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="goLeaderboard()">🏆 Topplista</button>
+          <button onclick="showNameScreen()">Byt spelare</button>
+        </div>
+      </div>
+      <div class="total-box">
+        <div class="num" id="totalScore">0</div>
+        <div class="lbl">Totalt antal Robux (alla nivåer)</div>
+      </div>
+      <div class="section-lbl">Engelska glosor</div>
+      <div class="levels" id="levelListWords"></div>
+      <div class="section-lbl">Matte</div>
+      <div class="levels" id="levelListMath"></div>
+      <div class="section-lbl">Läsäventyr</div>
+      <div class="levels" id="levelListReading"></div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div id="leaderboardArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">🏆 Topplista</div>
+        <div></div>
+      </div>
+      <div class="section-lbl" style="margin-top:0;">Bästa totalpoäng (alla nivåer)</div>
+      <div id="leaderboardList"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="quizArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div class="robux">🪙 <span id="score">0</span> Robux</div>
+        <div id="qcounter">Fråga 1 / 12</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+      <div class="word-box" id="wordBox">
+        <div class="word-label" id="wordLabel">Vad betyder</div>
+        <div class="word" id="wordText">?</div>
+      </div>
+
+      <div id="storyArea" class="hidden">
+        <div class="story-title" id="storyTitle">Sida 1 av 9</div>
+        <div class="story-box" id="storyText"></div>
+        <button class="go-btn" style="width:100%" onclick="showReadingQuestion()">Jag har läst — Fortsätt ➡️</button>
+      </div>
+
+      <div id="mcArea" class="options"></div>
+
+      <div id="typeArea" class="hidden">
+        <div class="type-row">
+          <input type="text" id="typeInput" placeholder="Skriv svaret..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text">
+          <button class="go-btn" onclick="checkTyped()">Kolla!</button>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+      <div class="next-wrap">
+        <button class="next-btn hidden" id="nextBtn" onclick="nextQuestion()">Nästa ➡️</button>
+      </div>
+      <div class="streak" id="streakBox"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="resultArea" class="result hidden">
+      <div class="big" id="resultEmoji">🏆</div>
+      <h2 id="resultTitle">Bra jobbat!</h2>
+      <div class="stars" id="resultStars"></div>
+      <p id="resultText"></p>
+      <button class="restart-btn" onclick="startLevel(currentLevelId)">Spela nivån igen 🔁</button>
+      <button class="menu-btn" onclick="goHome()">Till nivåval 🗺️</button>
+    </div>
+
+  </div>
+  <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
+</div>
+
+<script>
+// ---------- LEVEL DATA ----------
+// Word levels: sv can be a single string or array of accepted alternatives
+const levels = [
+  {
+    id: 1, type:"words", name: "Nivå 1: v38", meta: "år, väg, halsband, jaga...",
+    icon: "🧱", themeClass: "level-1",
+    words: [
+      {en:"year", sv:["år"]}, {en:"month", sv:["månad"]}, {en:"road", sv:["väg"]},
+      {en:"tall", sv:["lång"]}, {en:"short", sv:["kort"]}, {en:"it is called", sv:["det heter"]},
+      {en:"cream", sv:["grädde"]}, {en:"collar", sv:["halsband"]}, {en:"chase", sv:["jaga"]},
+      {en:"fly", sv:["flyga"]}, {en:"around", sv:["runt"]}, {en:"noise", sv:["oväsen"]}
+    ]
+  },
+  {
+    id: 2, type:"words", name: "Nivå 2: v39", meta: "dricka, sjunga, läsa, djur...",
+    icon: "📖", themeClass: "level-2",
+    words: [
+      {en:"drink", sv:["dricka"]}, {en:"walk", sv:["gå","vandra"]}, {en:"sing", sv:["sjunga"]},
+      {en:"write", sv:["skriva"]}, {en:"read", sv:["läsa"]}, {en:"see", sv:["se"]},
+      {en:"play", sv:["spela","leka"]}, {en:"talk", sv:["prata"]}, {en:"eat", sv:["äta"]},
+      {en:"stand", sv:["stå"]}, {en:"colour", sv:["färg"]}, {en:"animal", sv:["djur"]}
+    ]
+  },
+  {
+    id: 5, type:"words", name: "Nivå 5: v40 (åk 4)", meta: "blyertspenna, skolväska, klassrum...",
+    icon: "🎒", themeClass: "level-5",
+    words: [
+      {en:"pencil", sv:["blyertspenna"]}, {en:"book", sv:["bok"]}, {en:"schoolbag", sv:["skolväska"]},
+      {en:"chair", sv:["stol"]}, {en:"computer", sv:["dator"]}, {en:"coloured pencil", sv:["färgpenna"]},
+      {en:"pupil", sv:["elev"]}, {en:"teacher", sv:["lärare"]}, {en:"classroom", sv:["klassrum"]},
+      {en:"table", sv:["bord"]}, {en:"desk", sv:["skolbänk"]}, {en:"classmate", sv:["klasskompis"]},
+      {en:"rubber", sv:["suddgummi"]}
+    ]
+  },
+  {
+    id: 3, type:"math", name: "Nivå 3: Gångertabellen", meta: "2:an, 4:an och 8:ans tabell",
+    icon: "🧮", themeClass: "level-3",
+    tables: [2,4,8]
+  },
+  {
+    id: 4, type:"reading", name: "Nivå 4: Läs-äventyret", meta: "En spännande Roblox-historia",
+    icon: "📚", themeClass: "level-4",
+    pages: [
+      {
+        text: "Ture satt i sitt rum och spelade Roblox som han gjorde nästan varje dag. Han hade precis byggt en ny bana i sitt favoritspel när skärmen plötsligt började blinka i konstiga färger.\n\nMitt i spelet dök en ring av lila ljus upp, som ingen vanlig Roblox-effekt han sett förut. Ture lutade sig fram mot skärmen för att se bättre. Ringen växte och växte tills den fyllde hela rummet med ett svagt surrande ljud.\n\nPrecis när Ture sträckte ut handen mot musen kändes det som om golvet under stolen försvann. Allt blev vitt, sedan blått, och sedan... ingenting.",
+        question: "Vad kändes som hände när ljusringen växte?",
+        options: ["Datorn stängdes av", "Rummet blev mörkt och tyst", "Golvet under stolen kändes som det försvann", "Ture somnade"],
+        correct: 2
+      },
+      {
+        text: "När Ture öppnade ögonen igen låg han på en fyrkantig, blockig gräsmatta. Allt runt omkring honom såg ut som klossar - träden, molnen och till och med hans egna händer! Han insåg att han var inne i ett Roblox-spel, på riktigt.\n\nBredvid honom stod en liten robotfigur med blinkande blå ögon. \"Hej! Jag heter Byte\", sade figuren. \"Du måste vara den utvalda spelaren jag väntat på.\"\n\nByte berättade att spelvärlden höll på att gå sönder på grund av en farlig virus som kallades Lag-monstret. Om ingen stoppade det snart skulle hela världen fastna i en evig frysning.",
+        question: "Vad orsakar att spelvärlden går sönder?",
+        options: ["En storm", "Lag-monstret", "Ture själv", "Ett spöke"],
+        correct: 1
+      },
+      {
+        text: "Byte ledde Ture till ett område som kallades Robux-gruvan. Där glittrade tusentals guldmynt djupt inne i väggarna. \"Vi behöver samla robux-mynt för att ladda Ombootnings-maskinen\", sade Byte. \"Den kan laga hela världen, men bara om den får nog med energi.\"\n\nTure klev försiktigt in i gruvan. Golvet var fullt av rörliga plattformar som rörde sig upp och ner i ett konstigt mönster. Om han klev fel skulle han falla rakt ner i mörkret.\n\nHan tittade noga på mönstret, väntade på rätt ögonblick, och hoppade från platta till platta tills han nådde den första klumpen av glittrande mynt. Han samlade fem mynt i sin ficka.",
+        question: "Hur många mynt hann Ture samla i gruvan?",
+        options: ["Tre", "Fem", "Sju", "Tio"],
+        correct: 1
+      },
+      {
+        text: "Precis när Ture skulle klättra upp ur gruvan hörde han ett konstigt klickande ljud. Ur skuggorna kom små, taggiga varelser med röda ögon - Buggos, viruset små soldater.\n\n\"Spring!\" ropade Byte. De sprang genom smala gångar medan Buggos studsade efter dem som defekta studsbollar. Ture snubblade nästan över en lös sten men Byte drog honom i armen i sista sekunden.\n\nDe svängde runt ett hörn och såg en öppning i berget, precis stor nog för dem båda. Utan att tänka kastade de sig in i öppningen och föll ner i mörkret, bort från Buggos ilskna klickande.",
+        question: "Vad heter viruset små soldater som jagar Ture och Byte?",
+        options: ["Noobies", "Glitchar", "Buggos", "Pixlar"],
+        correct: 2
+      },
+      {
+        text: "Ture och Byte landade mjukt på en matta av lysande svamp längst ner i en tunnel. Allt var tyst - Buggos verkade ha tappat spåret.\n\n\"Den här tunneln leder till Kristallgrottorna\", viskade Byte. \"Där finns nästa del vi behöver: ett glödande chip till Ombootnings-maskinen.\"\n\nDe vandrade genom tunneln som lyste i blått och grönt från kristaller i väggarna. Efter en stund kom de fram till en stor dörr av sten, täckt av konstiga symboler. \"Den här dörren öppnas bara med rätt kod\", sade Byte och pekade på symbolerna. \"Vi måste hitta ledtrådarna någonstans i grottorna.\"",
+        question: "Vart leder tunneln som Ture och Byte hamnar i?",
+        options: ["Molnriket", "Robux-gruvan", "Kristallgrottorna", "Lavafloden"],
+        correct: 2
+      },
+      {
+        text: "De letade runt i grottorna och hittade tre lysande stenplattor, varsin med ett nummer inristat: 2, 4 och 8. Bredvid plattorna stod en gammal skylt: \"Multiplicera talen på dörren med talet du hittar här för att få rätt kod.\"\n\nPå dörren stod redan talet 6. Byte räknade snabbt: 6 gånger 2 är 12, 6 gånger 4 är 24, och 6 gånger 8 är 48. Ture skrev in alla tre svaren i tur och ordning på dörrens paneler.\n\nMed ett djupt mullrande ljud gled den tunga stendörren åt sidan. Innanför låg chippet de letade efter, lysande som en liten stjärna.",
+        question: "Vilka tal fanns inristade på stenplattorna?",
+        options: ["1, 3 och 5", "6, 7 och 9", "2, 4 och 8", "10, 20 och 30"],
+        correct: 2
+      },
+      {
+        text: "Med chippet i handen sprang Ture och Byte tillbaka mot ytan. Men precis vid grottans utgång stod Lag-monstret redan och väntade på dem, större och läskigare än Ture hade föreställt sig. Det var format som ett stort, hackigt block som flimrade mellan olika färger.\n\n\"Ni kan inte laga min värld\", dånade monstret med en röst som lät som statisk brus.\n\nByte viskade till Ture: \"Robux-mynten vi samlade kan ge dig en sköld. Använd dem nu!\" Ture höll fram mynten i handen och de smälte samman till ett skimrande skydd runt honom och Byte.",
+        question: "Vad blev robux-mynten till när Ture använde dem?",
+        options: ["Ett svärd", "En sköld", "En nyckel", "En bro"],
+        correct: 1
+      },
+      {
+        text: "Skyddat av skölden gick Ture och Byte rakt mot Lag-monstret. Monstret skickade blixtar av statisk elektricitet mot dem, men skölden höll.\n\nTure sprang fram och tryckte det glödande chippet mot en spricka i monstrets bröst - precis där Byte sagt att det var svagast. Ljus sprutade ut åt alla håll.\n\nLag-monstret skrek ett sista, kraxande skrik innan det sprack sönder i tusen små pixlar som föll som glitter mot marken. Världen omkring dem slutade flimra. Färgerna blev klara och fina igen, och himlen ovanför blev lugn och blå.",
+        question: "Var tryckte Ture det glödande chippet?",
+        options: ["På monstrets huvud", "I monstrets mun", "Mot en spricka i monstrets bröst", "Under monstrets fot"],
+        correct: 2
+      },
+      {
+        text: "Med Lag-monstret borta kunde Byte äntligen starta Ombootnings-maskinen på riktigt. Hela spelvärlden lyste upp i varma, fina färger. \"Tack vare dig är världen räddad\", sade Byte och log med sina blinkande ögon. \"Nu kan du åka hem igen.\"\n\nPrecis som förra gången fylldes allt med vitt ljus. När Ture öppnade ögonen satt han i sitt eget rum, framför datorn, som om ingen tid alls hade gått.\n\nMen när han tittade på handen såg han ett litet glitter av robux-guld kvar på fingrarna. Kanske hade det inte bara varit ett spel efter allt.",
+        question: "Vad hittade Ture på sin hand när han kom hem?",
+        options: ["En skada", "Ett meddelande", "Ingenting alls", "Ett litet glitter av robux-guld"],
+        correct: 3
+      }
+    ]
+  }
+];
+
+let players = {};      // { name: { levelId: {last, best, max} } }
+const STORAGE_KEY = "tureQuestPlayers_v1";
+
+function loadPlayers(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) players = JSON.parse(raw);
+  }catch(e){ players = {}; }
+}
+
+function savePlayers(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+  }catch(e){ /* storage unavailable, ignore */ }
+}
+let currentUser = null;
+let levelScores = {};  // points at players[currentUser] once chosen
+let order = [];
+let currentFacts = [];
+let current = 0;
+let score = 0;
+let streak = 0;
+let answered = false;
+let currentLevelId = null;
+let currentWords = [];
+let currentReadingPages = [];
+let readingAttemptWrong = false;
+let currentLevelType = "words";
+
+// ---------- NAME SCREEN ----------
+function showNameScreen(){
+  document.getElementById('nameArea').classList.remove('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('bodyEl').className = '';
+  document.getElementById('subtitle').textContent = "Vem ska öva idag?";
+
+  const wrap = document.getElementById('quickPlayersWrap');
+  const names = Object.keys(players);
+  if(names.length){
+    wrap.innerHTML = '<div class="quick-lbl">Har spelat förut</div><div class="quick-players" id="quickPlayers"></div>';
+    const qp = document.getElementById('quickPlayers');
+    names.forEach(n=>{
+      const b = document.createElement('button');
+      b.textContent = n;
+      b.onclick = ()=>{ document.getElementById('nameInput').value = n; submitName(); };
+      qp.appendChild(b);
+    });
+  } else {
+    wrap.innerHTML = '';
+  }
+  const input = document.getElementById('nameInput');
+  input.value = '';
+  setTimeout(()=>input.focus(), 50);
+  input.onkeydown = (e)=>{ if(e.key==='Enter') submitName(); };
+}
+
+function submitName(){
+  let name = document.getElementById('nameInput').value.trim();
+  if(!name) name = "Spelare";
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  currentUser = name;
+  if(!players[currentUser]) players[currentUser] = {};
+  levelScores = players[currentUser];
+  savePlayers();
+  document.getElementById('nameArea').classList.add('hidden');
+  renderHome();
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ---------- HOME ----------
+function renderHome(){
+  if(!currentUser){ showNameScreen(); return; }
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.remove('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('subtitle').textContent = "Välj nivå och samla robux!";
+  document.getElementById('bodyEl').className = '';
+  document.getElementById('playerName').textContent = currentUser;
+
+  let total = 0;
+  const wordList = document.getElementById('levelListWords');
+  const mathList = document.getElementById('levelListMath');
+  const readingList = document.getElementById('levelListReading');
+  wordList.innerHTML = '';
+  mathList.innerHTML = '';
+  readingList.innerHTML = '';
+
+  levels.forEach(lvl=>{
+    const s = levelScores[lvl.id];
+    if(s) total += s.last;
+    const div = document.createElement('div');
+    div.className = 'level-card';
+    div.onclick = ()=>startLevel(lvl.id);
+    div.innerHTML = `
+      <div class="icon">${lvl.icon}</div>
+      <div class="info">
+        <div class="name">${lvl.name}</div>
+        <div class="meta">${lvl.meta}</div>
+      </div>
+      <div class="score">${s ? s.last + ' 🪙' : 'Ny!'}</div>
+    `;
+    const target = lvl.type === "math" ? mathList : (lvl.type === "reading" ? readingList : wordList);
+    target.appendChild(div);
+  });
+  document.getElementById('totalScore').textContent = total;
+}
+
+function goHome(){ renderHome(); }
+
+function goLeaderboard(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Vem har flest robux?";
+  document.getElementById('bodyEl').className = '';
+  renderLeaderboard();
+}
+
+function renderLeaderboard(){
+  const rows = Object.keys(players).map(name=>{
+    const scores = players[name];
+    let total = 0, levelsPlayed = 0;
+    levels.forEach(lvl=>{
+      const s = scores[lvl.id];
+      if(s){ total += s.best; levelsPlayed++; }
+    });
+    return {name, total, levelsPlayed};
+  }).filter(r=>r.levelsPlayed > 0);
+
+  rows.sort((a,b)=> b.total - a.total);
+
+  const list = document.getElementById('leaderboardList');
+  list.innerHTML = '';
+  if(rows.length === 0){
+    list.innerHTML = '<div class="empty-msg">Ingen har spelat än — var först! 🚀</div>';
+    return;
+  }
+  rows.forEach((r,i)=>{
+    const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `${i+1}.`;
+    const div = document.createElement('div');
+    div.className = 'leader-row' + (r.name === currentUser ? ' me' : '');
+    div.innerHTML = `
+      <div class="rank">${medal}</div>
+      <div class="lname">${r.name}${r.name === currentUser ? ' (du)' : ''}</div>
+      <div class="lscore">${r.total} 🪙</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ---------- MATH FACT GENERATION ----------
+function generateMathFacts(tables){
+  let facts = [];
+  tables.forEach(t=>{
+    const multipliers = shuffle([1,2,3,4,5,6,7,8,9,10]).slice(0,4);
+    multipliers.forEach(m=> facts.push({a:t, b:m, product:t*m}));
+  });
+  return shuffle(facts);
+}
+
+// ---------- QUIZ ----------
+function startLevel(levelId){
+  const lvl = levels.find(l=>l.id===levelId);
+  currentLevelId = levelId;
+  currentLevelType = lvl.type;
+  document.getElementById('bodyEl').className = lvl.themeClass;
+  document.getElementById('subtitle').textContent = lvl.name;
+
+  if(lvl.type === "words"){
+    currentWords = lvl.words;
+    order = shuffle(currentWords.map((w,i)=>i)).map(idx=>{
+      const r = Math.random();
+      let mode = r < 0.45 ? "mc" : (r < 0.55 ? "mc_rev" : "type");
+      return {idx, mode};
+    });
+  } else if(lvl.type === "reading"){
+    currentReadingPages = lvl.pages;
+    order = currentReadingPages.map((p,i)=>({idx:i}));
+  } else {
+    currentFacts = generateMathFacts(lvl.tables);
+    order = currentFacts.map((f,i)=>({idx:i, mode: Math.random() < 0.55 ? "mc" : "type"}));
+  }
+
+  current = 0;
+  score = 0;
+  streak = 0;
+
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.remove('hidden');
+  updateScore();
+  renderQuestion();
+}
+
+function updateScore(){ document.getElementById('score').textContent = score; }
+
+function renderQuestion(){
+  answered = false;
+  const total = order.length;
+  document.getElementById('qcounter').textContent = `Fråga ${current+1} / ${total}`;
+  document.getElementById('progress').style.width = `${(current/total)*100}%`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').classList.add('hidden');
+
+  const q = order[current];
+  const mcArea = document.getElementById('mcArea');
+  const typeArea = document.getElementById('typeArea');
+  const storyArea = document.getElementById('storyArea');
+  const wordBox = document.getElementById('wordBox');
+  mcArea.innerHTML = '';
+  typeArea.classList.add('hidden');
+  mcArea.classList.add('hidden');
+  storyArea.classList.add('hidden');
+  wordBox.classList.remove('hidden');
+
+  if(currentLevelType === "math"){
+    renderMathQuestion(q, mcArea, typeArea);
+  } else if(currentLevelType === "reading"){
+    wordBox.classList.add('hidden');
+    renderReadingPage(q);
+  } else {
+    renderWordQuestion(q, mcArea, typeArea);
+  }
+}
+
+function renderReadingPage(q){
+  readingAttemptWrong = false;
+  const page = currentReadingPages[q.idx];
+  document.getElementById('storyTitle').textContent = `Sida ${current+1} av ${order.length}`;
+  document.getElementById('storyText').innerHTML = page.text.split('\n\n').map(p=>`<p>${p}</p>`).join('');
+  document.getElementById('storyArea').classList.remove('hidden');
+}
+
+function showReadingQuestion(){
+  const q = order[current];
+  const page = currentReadingPages[q.idx];
+  document.getElementById('storyArea').classList.add('hidden');
+  document.getElementById('wordBox').classList.remove('hidden');
+  document.getElementById('wordLabel').textContent = "Fråga om det du läste:";
+  document.getElementById('wordText').textContent = page.question;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  const mcArea = document.getElementById('mcArea');
+  mcArea.classList.remove('hidden');
+  mcArea.innerHTML = '';
+  const opts = page.options.map((opt,i)=>({opt,i}));
+  shuffle(opts).forEach(o=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = o.opt;
+    btn.onclick = ()=>selectReadingOption(btn, o.i, page.correct);
+    mcArea.appendChild(btn);
+  });
+}
+
+function selectReadingOption(btn, chosenIdx, correctIdx){
+  const fb = document.getElementById('feedback');
+  if(chosenIdx === correctIdx){
+    btn.classList.add('correct');
+    document.querySelectorAll('#mcArea .opt-btn').forEach(b=>b.disabled=true);
+    const bonus = readingAttemptWrong ? 15 : 30;
+    score += bonus;
+    updateScore();
+    fb.textContent = `✅ Rätt! +${bonus} Robux — nu kan du fortsätta läsa.`;
+    fb.className = 'feedback ok';
+    document.getElementById('nextBtn').classList.remove('hidden');
+  } else {
+    readingAttemptWrong = true;
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    fb.textContent = "❌ Nästan! Testa ett annat svar.";
+    fb.className = 'feedback bad';
+  }
+}
+
+function renderWordQuestion(q, mcArea, typeArea){
+  const w = currentWords[q.idx];
+  if(q.mode === "mc" || q.mode === "mc_rev"){
+    mcArea.classList.remove('hidden');
+    let correctAnswer, pool;
+    if(q.mode === "mc"){
+      document.getElementById('wordLabel').textContent = "Vad betyder på svenska:";
+      document.getElementById('wordText').textContent = w.en;
+      correctAnswer = w.sv[0];
+      pool = currentWords.map(x=>x.sv[0]).filter(x=>x!==correctAnswer);
+    } else {
+      document.getElementById('wordLabel').textContent = "Vad heter det på engelska:";
+      document.getElementById('wordText').textContent = w.sv.join(" / ");
+      correctAnswer = w.en;
+      pool = currentWords.map(x=>x.en).filter(x=>x!==correctAnswer);
+    }
+    const distractors = shuffle(pool).slice(0,3);
+    const options = shuffle([correctAnswer, ...distractors]);
+    options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = ()=>selectOption(btn, opt, correctAnswer);
+      mcArea.appendChild(btn);
+    });
+  } else {
+    typeArea.classList.remove('hidden');
+    const rev = w.sv.length === 1 ? Math.random() < 0.5 : false;
+    const input = document.getElementById('typeInput');
+    input.value = ''; input.disabled = false;
+    input.inputMode = 'text';
+    if(rev){
+      document.getElementById('wordLabel').textContent = "Skriv den svenska glosan för:";
+      document.getElementById('wordText').textContent = w.en;
+      input.dataset.answers = JSON.stringify(w.sv);
+      input.dataset.display = w.sv[0];
+    } else {
+      document.getElementById('wordLabel').textContent = "Skriv den engelska glosan för:";
+      document.getElementById('wordText').textContent = w.sv.join(" / ");
+      input.dataset.answers = JSON.stringify([w.en]);
+      input.dataset.display = w.en;
+    }
+    setTimeout(()=>input.focus(), 50);
+    input.onkeydown = (e)=>{ if(e.key==='Enter') checkTyped(); };
+  }
+}
+
+function renderMathQuestion(q, mcArea, typeArea){
+  const f = currentFacts[q.idx];
+  document.getElementById('wordLabel').textContent = "Räkna ut:";
+  document.getElementById('wordText').textContent = `${f.a} × ${f.b}`;
+
+  if(q.mode === "mc"){
+    mcArea.classList.remove('hidden');
+    const correct = f.product;
+    const distractorSet = new Set();
+    while(distractorSet.size < 3){
+      const offsetOptions = [f.a, -f.a, f.a*2, -f.a*2, f.b, -f.b, 1, -1, 2, -2];
+      const off = offsetOptions[Math.floor(Math.random()*offsetOptions.length)];
+      const cand = correct + off;
+      if(cand > 0 && cand !== correct) distractorSet.add(cand);
+    }
+    const options = shuffle([correct, ...distractorSet]);
+    options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = ()=>selectOption(btn, opt, correct);
+      mcArea.appendChild(btn);
+    });
+  } else {
+    typeArea.classList.remove('hidden');
+    const input = document.getElementById('typeInput');
+    input.value = ''; input.disabled = false;
+    input.inputMode = 'numeric';
+    input.dataset.answers = JSON.stringify([String(f.product)]);
+    input.dataset.display = String(f.product);
+    setTimeout(()=>input.focus(), 50);
+    input.onkeydown = (e)=>{ if(e.key==='Enter') checkTyped(); };
+  }
+}
+
+function selectOption(btn, chosen, correct){
+  if(answered) return;
+  answered = true;
+  const allBtns = document.querySelectorAll('.opt-btn');
+  allBtns.forEach(b=>{
+    if(String(b.textContent) === String(correct)) b.classList.add('correct');
+    b.disabled = true;
+  });
+  if(String(chosen) === String(correct)) onCorrect();
+  else { btn.classList.add('wrong'); onWrong(correct); }
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+function checkTyped(){
+  if(answered) return;
+  const input = document.getElementById('typeInput');
+  const val = input.value.trim().toLowerCase();
+  const answers = JSON.parse(input.dataset.answers).map(a=>a.toLowerCase());
+  answered = true;
+  input.disabled = true;
+  if(answers.includes(val)) onCorrect();
+  else onWrong(input.dataset.display);
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+function onCorrect(){
+  streak++;
+  const bonus = 10 + Math.min(streak*2, 20);
+  score += bonus;
+  updateScore();
+  const fb = document.getElementById('feedback');
+  fb.textContent = streak >= 3 ? `🔥 Rätt! +${bonus} Robux (streak x${streak}!)` : `✅ Rätt! +${bonus} Robux`;
+  fb.className = 'feedback ok';
+  document.getElementById('streakBox').textContent = streak >= 2 ? `Streak: ${streak} i rad! 🔥` : '';
+}
+
+function onWrong(correctAnswer){
+  streak = 0;
+  const fb = document.getElementById('feedback');
+  fb.textContent = `❌ Rätt svar: ${correctAnswer}`;
+  fb.className = 'feedback bad';
+  document.getElementById('streakBox').textContent = '';
+}
+
+function nextQuestion(){
+  current++;
+  if(current >= order.length) finishLevel();
+  else renderQuestion();
+}
+
+function finishLevel(){
+  document.getElementById('progress').style.width = '100%';
+  document.getElementById('quizArea').classList.add('hidden');
+  const resultArea = document.getElementById('resultArea');
+  resultArea.classList.remove('hidden');
+
+  const maxScore = order.length * 30;
+  const pct = score / maxScore;
+  const prev = levelScores[currentLevelId];
+  const best = prev ? Math.max(prev.best, score) : score;
+  levelScores[currentLevelId] = {last: score, best: best, max: maxScore};
+  savePlayers();
+
+  let emoji, title, text, starCount;
+  if(pct >= 0.8){ emoji="🏆👑"; title="LEGENDARY WIN!"; starCount=3;
+    text=`Du fick ${score} Robux! Du kan detta som en boss.`; }
+  else if(pct >= 0.5){ emoji="⭐🎮"; title="Snyggt kämpat!"; starCount=2;
+    text=`Du fick ${score} Robux. Kör en runda till för att bli EPIC!`; }
+  else { emoji="🔁🛠️"; title="Bygg vidare!"; starCount=1;
+    text=`Du fick ${score} Robux. Öva lite till — sen klarar du nästa runda lätt!`; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultStars').textContent = "⭐".repeat(starCount) + "☆".repeat(3-starCount);
+  document.getElementById('resultText').textContent = text;
+}
+
+loadPlayers();
+showNameScreen();
+</script>
+</body>
+</html>
