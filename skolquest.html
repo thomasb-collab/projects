@@ -112,6 +112,21 @@
   }
   .quick-players button:hover{border-color:var(--accent);}
   .quick-lbl{font-size:0.75em; opacity:0.55; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1px;}
+  .avatar-grid{
+    display:grid; grid-template-columns:repeat(6, 1fr); gap:8px;
+    margin-bottom:6px;
+  }
+  .avatar-grid button{
+    font-size:1.6em; line-height:1;
+    background:rgba(255,255,255,0.05); border:2px solid #3a4590;
+    border-radius:12px; padding:8px 0; cursor:pointer;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .avatar-grid button.selected{
+    border-color:var(--accent2); background:rgba(255,255,255,0.12);
+    box-shadow:0 0 12px rgba(124,255,0,0.35);
+  }
+  @media (max-width:420px){ .avatar-grid{grid-template-columns:repeat(4, 1fr);} }
   .player-bar{
     display:flex; align-items:center; justify-content:space-between;
     background:rgba(255,255,255,0.05); border:1px solid #3a4590; border-radius:12px;
@@ -239,6 +254,8 @@
       <div class="emoji">🙋</div>
       <div>Vem spelar?</div>
       <input type="text" id="nameInput" placeholder="Skriv ditt namn..." autocomplete="off" autocapitalize="words" maxlength="20">
+      <div class="quick-lbl">Välj en avatar</div>
+      <div class="avatar-grid" id="avatarGrid"></div>
       <button class="go-btn" onclick="submitName()" style="width:100%;">Kör igång! 🚀</button>
       <div id="quickPlayersWrap"></div>
     </div>
@@ -247,8 +264,9 @@
     <div id="homeArea" class="hidden">
       <div class="player-bar">
         <div>Spelar som: <span class="who" id="playerName"></span></div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button onclick="goLeaderboard()">🏆 Topplista</button>
+          <button onclick="changeAvatar()">🎭 Byt avatar</button>
           <button onclick="showNameScreen()">Byt spelare</button>
         </div>
       </div>
@@ -387,9 +405,10 @@
     }catch(e){ console.error("Kunde inte hämta topplistan från molnet:", e); return null; }
   };
 
-  window.fbResetPlayer = async function(name){
+  window.fbResetPlayer = async function(name, keepAvatar){
     try{
-      await setDoc(doc(db, SCORES_COLLECTION, docIdFor(name)), { levels: {}, updatedAt: Date.now() });
+      const levels = keepAvatar ? { avatar: keepAvatar } : {};
+      await setDoc(doc(db, SCORES_COLLECTION, docIdFor(name)), { levels, updatedAt: Date.now() });
     }catch(e){ console.error("Kunde inte nollställa spelare i molnet:", e); }
   };
 
@@ -531,6 +550,26 @@ let currentReadingPages = [];
 let readingAttemptWrong = false;
 let currentLevelType = "words";
 
+const AVATARS = ["🤖","🦸","🥷","🧙","🐉","🦊","🐱","👾","🚀","⚡","🎮","🦄"];
+let selectedAvatar = AVATARS[0];
+
+function avatarFor(name){
+  return (players[name] && players[name].avatar) || "🙂";
+}
+
+function renderAvatarGrid(){
+  const grid = document.getElementById('avatarGrid');
+  grid.innerHTML = '';
+  AVATARS.forEach(a=>{
+    const b = document.createElement('button');
+    b.textContent = a;
+    b.type = 'button';
+    if(a === selectedAvatar) b.classList.add('selected');
+    b.onclick = ()=>{ selectedAvatar = a; renderAvatarGrid(); };
+    grid.appendChild(b);
+  });
+}
+
 // ---------- NAME SCREEN ----------
 function showNameScreen(){
   document.getElementById('nameArea').classList.remove('hidden');
@@ -542,6 +581,9 @@ function showNameScreen(){
   document.getElementById('bodyEl').className = '';
   document.getElementById('subtitle').textContent = "Vem ska öva idag?";
 
+  selectedAvatar = AVATARS[0];
+  renderAvatarGrid();
+
   const wrap = document.getElementById('quickPlayersWrap');
   const names = Object.keys(players);
   if(names.length){
@@ -549,8 +591,13 @@ function showNameScreen(){
     const qp = document.getElementById('quickPlayers');
     names.forEach(n=>{
       const b = document.createElement('button');
-      b.textContent = n;
-      b.onclick = ()=>{ document.getElementById('nameInput').value = n; submitName(); };
+      b.textContent = `${avatarFor(n)} ${n}`;
+      b.onclick = ()=>{
+        document.getElementById('nameInput').value = n;
+        selectedAvatar = players[n].avatar || AVATARS[0];
+        renderAvatarGrid();
+        submitName();
+      };
       qp.appendChild(b);
     });
   } else {
@@ -560,6 +607,31 @@ function showNameScreen(){
   input.value = '';
   setTimeout(()=>input.focus(), 50);
   input.onkeydown = (e)=>{ if(e.key==='Enter') submitName(); };
+  input.oninput = ()=>{
+    const typed = input.value.trim();
+    if(!typed) return;
+    const capitalized = typed.charAt(0).toUpperCase() + typed.slice(1);
+    if(players[capitalized] && players[capitalized].avatar){
+      selectedAvatar = players[capitalized].avatar;
+      renderAvatarGrid();
+    }
+  };
+}
+
+function changeAvatar(){
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('nameArea').classList.remove('hidden');
+  document.getElementById('bodyEl').className = '';
+  document.getElementById('subtitle').textContent = "Byt din avatar";
+  document.getElementById('quickPlayersWrap').innerHTML = '';
+
+  selectedAvatar = (players[currentUser] && players[currentUser].avatar) || AVATARS[0];
+  renderAvatarGrid();
+
+  const input = document.getElementById('nameInput');
+  input.value = currentUser;
+  input.onkeydown = (e)=>{ if(e.key==='Enter') submitName(); };
+  input.oninput = null;
 }
 
 async function submitName(){
@@ -569,6 +641,7 @@ async function submitName(){
   currentUser = name;
   if(!players[currentUser]) players[currentUser] = {};
   levelScores = players[currentUser];
+  levelScores.avatar = selectedAvatar;
   savePlayers();
   document.getElementById('nameArea').classList.add('hidden');
   renderHome();
@@ -578,9 +651,11 @@ async function submitName(){
     const cloudLevels = await window.fbGetPlayerScores(currentUser);
     if(cloudLevels && currentUser === name){
       players[currentUser] = cloudLevels;
+      players[currentUser].avatar = selectedAvatar; // the avatar just picked this session wins
       levelScores = players[currentUser];
       savePlayers();
       renderHome();
+      if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
     }
   }
 }
@@ -605,7 +680,7 @@ function renderHome(){
   document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('subtitle').textContent = "Välj nivå och samla robux!";
   document.getElementById('bodyEl').className = '';
-  document.getElementById('playerName').textContent = currentUser;
+  document.getElementById('playerName').textContent = `${avatarFor(currentUser)} ${currentUser}`;
 
   let total = 0;
   const wordList = document.getElementById('levelListWords');
@@ -625,7 +700,7 @@ function renderHome(){
       <div class="icon">${lvl.icon}</div>
       <div class="info">
         <div class="name">${lvl.name}</div>
-        <div class="meta">${lvl.meta}</div>
+        <div class="meta">${lvl.meta}${s && s.plays ? ` · spelad ${s.plays} ${s.plays === 1 ? 'gång' : 'gånger'}` : ''}</div>
       </div>
       <div class="score">${s ? s.last + ' 🪙' : 'Ny!'}</div>
     `;
@@ -689,7 +764,7 @@ function renderAdminList(){
     const div = document.createElement('div');
     div.className = 'admin-row';
     div.innerHTML = `
-      <div class="aname">${r.name}</div>
+      <div class="aname">${avatarFor(r.name)} ${r.name}</div>
       <div class="ascore">${r.total} 🪙</div>
       <div class="abtns">
         <button onclick="adminResetPlayer('${r.name.replace(/'/g,"\\'")}')">Nollställ</button>
@@ -702,10 +777,11 @@ function renderAdminList(){
 
 async function adminResetPlayer(name){
   if(!confirm(`Nollställ alla poäng för ${name}?`)) return;
-  players[name] = {};
+  const keepAvatar = players[name] ? players[name].avatar : null;
+  players[name] = keepAvatar ? {avatar: keepAvatar} : {};
   if(name === currentUser) levelScores = players[currentUser];
   savePlayers();
-  if(window.fbResetPlayer) await window.fbResetPlayer(name);
+  if(window.fbResetPlayer) await window.fbResetPlayer(name, keepAvatar);
   renderAdminList();
 }
 
@@ -778,7 +854,7 @@ function renderLeaderboard(){
     div.className = 'leader-row' + (r.name === currentUser ? ' me' : '');
     div.innerHTML = `
       <div class="rank">${medal}</div>
-      <div class="lname">${r.name}${r.name === currentUser ? ' (du)' : ''}</div>
+      <div class="lname">${avatarFor(r.name)} ${r.name}${r.name === currentUser ? ' (du)' : ''}</div>
       <div class="lscore">${r.total} 🪙</div>
     `;
     list.appendChild(div);
@@ -1053,7 +1129,8 @@ function finishLevel(){
   const pct = score / maxScore;
   const prev = levelScores[currentLevelId];
   const best = prev ? Math.max(prev.best, score) : score;
-  levelScores[currentLevelId] = {last: score, best: best, max: maxScore};
+  const plays = prev ? (prev.plays || 0) + 1 : 1;
+  levelScores[currentLevelId] = {last: score, best: best, max: maxScore, plays: plays};
   savePlayers();
   if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
 
