@@ -148,6 +148,57 @@
   .leader-row .lname{flex:1; font-weight:700; min-width:0; word-break:break-word;}
   .leader-row .lscore{font-weight:800; color:var(--accent2); white-space:nowrap;}
   .empty-msg{text-align:center; opacity:0.6; padding:20px 0;}
+  /* ---------- SECRET ROOM ---------- */
+  .secret-teaser{
+    margin-top:16px;
+    border-radius:16px;
+    padding:16px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .secret-teaser.locked{
+    background:rgba(255,255,255,0.04);
+    border:2px dashed #3a4590;
+  }
+  .secret-teaser.unlocked{
+    background:linear-gradient(135deg, rgba(0,229,255,0.18), rgba(124,255,0,0.14));
+    border:2px solid var(--accent2);
+    cursor:pointer;
+    animation:championGlow 2.5s ease-in-out infinite;
+  }
+  .secret-teaser .st-title{font-weight:800; margin-bottom:6px;}
+  .secret-teaser .st-progress{
+    height:8px; background:#0a0e24; border-radius:5px; overflow:hidden;
+    border:1px solid #333c6e; margin-top:8px;
+  }
+  .secret-teaser .st-progress-fill{height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width 0.3s;}
+  .secret-teaser .st-sub{font-size:0.8em; opacity:0.7; margin-top:6px;}
+  .secret-hint{text-align:center; font-size:0.85em; opacity:0.7; margin-bottom:12px;}
+  #secretCanvasWrap{
+    width:100%; aspect-ratio:1/1; max-height:60vh;
+    border-radius:16px; overflow:hidden; position:relative;
+    background:radial-gradient(circle at 50% 30%, #2a1f5e 0%, #0b1020 75%);
+    border:2px solid var(--accent);
+    touch-action:none;
+  }
+  #secretCanvasWrap canvas{display:block; width:100%; height:100%;}
+  .unlock-toast{
+    position:fixed; left:50%; top:16px; transform:translateX(-50%);
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid var(--accent2, #7cff00);
+    border-radius:16px; padding:14px 22px; text-align:center;
+    z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    animation:toastPop 0.4s ease-out;
+  }
+  .unlock-toast.hidden{display:none;}
+  .unlock-toast .ut-emoji{font-size:2em;}
+  .unlock-toast .ut-title{font-weight:900; color:#fff; margin-top:2px;}
+  .unlock-toast .ut-sub{font-size:0.8em; opacity:0.8; margin-top:2px;}
+  @keyframes toastPop{
+    0%{ transform:translateX(-50%) translateY(-20px) scale(0.9); opacity:0; }
+    100%{ transform:translateX(-50%) translateY(0) scale(1); opacity:1; }
+  }
   .champion-card{
     position:relative;
     text-align:center;
@@ -332,6 +383,7 @@
       <div class="levels" id="levelListMath"></div>
       <div class="section-lbl">Läsäventyr</div>
       <div class="levels" id="levelListReading"></div>
+      <div id="secretTeaserWrap"></div>
     </div>
 
     <!-- LEADERBOARD -->
@@ -354,7 +406,19 @@
       </div>
       <div class="section-lbl" style="margin-top:0;">Spelare</div>
       <div id="adminList"></div>
+      <button class="menu-btn" style="width:100%; margin-top:10px;" onclick="goSecretRoom()">🌀 Testa hemliga rummet</button>
       <button class="menu-btn" style="width:100%; background:linear-gradient(135deg,#8b1e1e,#4a0f0f); margin-top:10px;" onclick="adminResetAll()">🗑️ Nollställ alla spelare</button>
+    </div>
+
+    <!-- SECRET 3D ROOM -->
+    <div id="secretArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">🌀 Hemliga rummet</div>
+        <div></div>
+      </div>
+      <div class="secret-hint" id="secretHint">Dra i marshmallowen för att klämma och töja den — släpp så vaggar den tillbaka!</div>
+      <div id="secretCanvasWrap"><div id="secretLoading" class="empty-msg">Laddar 3D...</div></div>
     </div>
 
     <!-- QUIZ -->
@@ -408,6 +472,12 @@
   <div style="text-align:center; margin-top:8px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
+</div>
+
+<div id="unlockToast" class="unlock-toast hidden">
+  <div class="ut-emoji">🌀✨</div>
+  <div class="ut-title">Hemliga rummet upplåst!</div>
+  <div class="ut-sub">Gå till nivåskärmen för att kolla in det</div>
 </div>
 
 <script type="module">
@@ -574,6 +644,16 @@ const levels = [
 ];
 
 let players = {};      // { name: { levelId: {last, best, max} } }
+
+// Some networks block Firestore's long-polling connection outright, which can
+// leave a cloud call pending forever instead of rejecting. Race it against a
+// timeout so the UI always falls back to local/cached data.
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(()=>resolve(null), ms))
+  ]);
+}
 const STORAGE_KEY = "tureQuestPlayers_v1";
 
 function loadPlayers(){
@@ -605,6 +685,50 @@ let currentLevelType = "words";
 const AVATARS = ["🤖","🦸","🥷","🧙","🐉","🦊","🐱","👾","🚀","⚡","🎮","🦄"];
 let selectedAvatar = AVATARS[0];
 
+// ---------- SECRET ROOM UNLOCK ----------
+const SECRET_GOAL = 300;
+let sessionEarned = 0;
+let secretUnlocked = false;
+
+function addSessionPoints(n){
+  sessionEarned += n;
+  if(!secretUnlocked && sessionEarned >= SECRET_GOAL){
+    secretUnlocked = true;
+    showUnlockToast();
+  }
+  renderSecretTeaser();
+}
+
+function showUnlockToast(){
+  const toast = document.getElementById('unlockToast');
+  if(!toast) return;
+  toast.classList.remove('hidden');
+  setTimeout(()=>{ toast.classList.add('hidden'); }, 4000);
+}
+
+function renderSecretTeaser(){
+  const wrap = document.getElementById('secretTeaserWrap');
+  if(!wrap) return;
+  if(secretUnlocked){
+    wrap.innerHTML = `
+      <div class="secret-teaser unlocked" onclick="goSecretRoom()">
+        <div class="st-title">🌀 Hemliga rummet är upplåst!</div>
+        <div class="st-sub">Tryck här för att gå in</div>
+      </div>
+    `;
+  } else {
+    const pct = Math.min(100, Math.round((sessionEarned / SECRET_GOAL) * 100));
+    wrap.innerHTML = `
+      <div class="secret-teaser locked">
+        <div class="st-title">🔒 ??? Hemligt rum</div>
+        <div class="st-sub">Samla ${SECRET_GOAL} Robux under samma omgång för att låsa upp</div>
+        <div class="st-progress"><div class="st-progress-fill" style="width:${pct}%"></div></div>
+        <div class="st-sub">${sessionEarned} / ${SECRET_GOAL}</div>
+      </div>
+    `;
+  }
+}
+
 function avatarFor(name){
   return (players[name] && players[name].avatar) || "🙂";
 }
@@ -630,6 +754,7 @@ function showNameScreen(){
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
   document.getElementById('bodyEl').className = '';
   document.getElementById('subtitle').textContent = "Vem ska öva idag?";
 
@@ -695,6 +820,8 @@ async function submitName(){
   levelScores = players[currentUser];
   levelScores.avatar = selectedAvatar;
   savePlayers();
+  sessionEarned = 0;
+  secretUnlocked = false;
   document.getElementById('nameArea').classList.add('hidden');
   renderHome();
 
@@ -730,9 +857,11 @@ function renderHome(){
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
   document.getElementById('subtitle').textContent = "Välj nivå och samla robux!";
   document.getElementById('bodyEl').className = '';
   document.getElementById('playerName').textContent = `${avatarFor(currentUser)} ${currentUser}`;
+  renderSecretTeaser();
 
   let total = 0;
   const wordList = document.getElementById('levelListWords');
@@ -780,6 +909,7 @@ async function goAdmin(){
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
   document.getElementById('adminArea').classList.remove('hidden');
   document.getElementById('subtitle').textContent = "Hantera spelare";
   document.getElementById('bodyEl').className = '';
@@ -865,6 +995,7 @@ async function goLeaderboard(){
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.remove('hidden');
   document.getElementById('subtitle').textContent = "Vem har flest robux?";
   document.getElementById('bodyEl').className = '';
@@ -1050,6 +1181,7 @@ function selectReadingOption(btn, chosenIdx, correctIdx){
     const bonus = readingAttemptWrong ? 15 : 30;
     score += bonus;
     updateScore();
+    addSessionPoints(bonus);
     fb.textContent = `✅ Rätt! +${bonus} Robux — nu kan du fortsätta läsa.`;
     fb.className = 'feedback ok';
     document.getElementById('nextBtn').classList.remove('hidden');
@@ -1174,6 +1306,7 @@ function onCorrect(){
   const bonus = 10 + Math.min(streak*2, 20);
   score += bonus;
   updateScore();
+  addSessionPoints(bonus);
   const fb = document.getElementById('feedback');
   fb.textContent = streak >= 3 ? `🔥 Rätt! +${bonus} Robux (streak x${streak}!)` : `✅ Rätt! +${bonus} Robux`;
   fb.className = 'feedback ok';
@@ -1221,6 +1354,490 @@ function finishLevel(){
   document.getElementById('resultTitle').textContent = title;
   document.getElementById('resultStars').textContent = "⭐".repeat(starCount) + "☆".repeat(3-starCount);
   document.getElementById('resultText').textContent = text;
+}
+
+// ---------- SECRET 3D ROOM ----------
+let threeLoaded = false;
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function ensureThree(){
+  if(threeLoaded && window.THREE) return true;
+  try{
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js");
+    threeLoaded = true;
+    return true;
+  }catch(e){
+    console.error("Kunde inte ladda 3D-biblioteket:", e);
+    return false;
+  }
+}
+
+let secretScene = null; // holds renderer/scene/camera/parts once built
+
+async function goSecretRoom(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Hemliga rummet";
+  document.getElementById('bodyEl').className = '';
+
+  const ok = await ensureThree();
+  if(!ok){
+    document.getElementById('secretCanvasWrap').innerHTML = '<div class="empty-msg">Kunde inte ladda 3D just nu. Testa igen om en stund!</div>';
+    return;
+  }
+  initSecretScene();
+}
+
+function playTone(freq, duration, type, delay, gainAmt){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!window._sharedAC) window._sharedAC = new AC();
+    const ctx = window._sharedAC;
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(gainAmt || 0.15, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  }catch(e){ /* audio unavailable, ignore */ }
+}
+
+function playSweep(f1, f2, duration, type, delay, gainAmt){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!window._sharedAC) window._sharedAC = new AC();
+    const ctx = window._sharedAC;
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(f1, t0);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(f2,1), t0 + duration);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(gainAmt || 0.15, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  }catch(e){ /* audio unavailable, ignore */ }
+}
+
+function initSecretScene(){
+  const wrap = document.getElementById('secretCanvasWrap');
+
+  // Rebuild fresh each time.
+  wrap.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  wrap.appendChild(canvas);
+
+  const width = wrap.clientWidth, height = wrap.clientHeight;
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 100);
+  camera.position.set(0, 0.6, 5.3);
+  camera.lookAt(0, -0.35, 0);
+
+  scene.add(new THREE.AmbientLight(0xfff4e6, 0.65));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.0);
+  dl.position.set(3, 5, 4);
+  dl.castShadow = true;
+  dl.shadow.mapSize.set(1024, 1024);
+  dl.shadow.camera.near = 1;
+  dl.shadow.camera.far = 15;
+  dl.shadow.camera.left = -4; dl.shadow.camera.right = 4;
+  dl.shadow.camera.top = 4; dl.shadow.camera.bottom = -4;
+  dl.shadow.bias = -0.002;
+  scene.add(dl);
+  const dl2 = new THREE.DirectionalLight(0xffc9e3, 0.3);
+  dl2.position.set(-3, -1, -4);
+  scene.add(dl2);
+
+  // ---- A little room: floor + back wall ----
+  const FLOOR_Y = -1.15;
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(9, 9),
+    new THREE.MeshStandardMaterial({color: 0xd9c6a3, roughness: 0.95})
+  );
+  floor.rotation.x = -Math.PI/2;
+  floor.position.y = FLOOR_Y;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const backWall = new THREE.Mesh(
+    new THREE.PlaneGeometry(9, 6),
+    new THREE.MeshStandardMaterial({color: 0xe7d6de, roughness: 1})
+  );
+  backWall.position.set(0, FLOOR_Y + 3, -2.6);
+  backWall.receiveShadow = true;
+  scene.add(backWall);
+
+  // ---- Squishy bao-bun mesh ----
+  const geo = new THREE.SphereGeometry(1.35, 48, 32);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xe3c9a0, roughness: 0.82, metalness: 0.0,
+    emissive: 0x3a2410, emissiveIntensity: 0.05
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.scale.set(1.18, 0.95, 1.18);
+  mesh.castShadow = true;
+
+  // Sculpt a bao-bun dome: flatten the underside, round the top, and pinch radial
+  // pleats that gather toward a point at the very top, like the plush toy photo.
+  const posAttr = geo.attributes.position;
+  const vertCount = posAttr.count;
+  const PLEAT_COUNT = 12;
+  for(let i=0;i<vertCount;i++){
+    const ix = i*3;
+    let x = posAttr.array[ix], y = posAttr.array[ix+1], z = posAttr.array[ix+2];
+
+    // Flatten the bottom, keep the top round (dome/bun silhouette).
+    y = y < 0 ? y*0.5 : y*1.08;
+
+    const r = Math.sqrt(x*x + y*y + z*z) || 1;
+    const theta = Math.acos(THREE.MathUtils.clamp(y/r, -1, 1)); // 0 at top pole
+    const phi = Math.atan2(z, x);
+
+    const topFalloff = Math.max(0, 1 - theta/(Math.PI*0.6));
+    const pleat = Math.cos(phi*PLEAT_COUNT) * 0.045 * Math.pow(topFalloff, 1.6);
+    const pinch = theta < 0.22 ? -0.07 * (1 - theta/0.22) : 0;
+
+    const scaleFactor = (r + pleat + pinch) / r;
+    posAttr.array[ix]   = x*scaleFactor;
+    posAttr.array[ix+1] = y*scaleFactor;
+    posAttr.array[ix+2] = z*scaleFactor;
+  }
+  posAttr.needsUpdate = true;
+  geo.computeVertexNormals();
+
+  const basePositions = new Float32Array(posAttr.array); // rest shape (local space)
+  const offset = new Float32Array(vertCount * 3);         // current displacement per vertex
+  const velocity = new Float32Array(vertCount * 3);       // per-vertex velocity
+  const target = new Float32Array(vertCount * 3);         // where the drag/poke wants it to go
+
+  // ---- Cute face, drawn on a small front-facing plane ----
+  const faceCanvas = document.createElement('canvas');
+  faceCanvas.width = 512; faceCanvas.height = 340;
+  const fctx = faceCanvas.getContext('2d');
+  fctx.clearRect(0,0,512,340);
+  // blush
+  fctx.fillStyle = 'rgba(255,120,140,0.55)';
+  [[80,205],[104,222],[70,232]].forEach(([dx,dy])=>{
+    fctx.beginPath(); fctx.ellipse(dx, dy, 15, 9, -0.4, 0, Math.PI*2); fctx.fill();
+  });
+  [[432,205],[408,222],[442,232]].forEach(([dx,dy])=>{
+    fctx.beginPath(); fctx.ellipse(dx, dy, 15, 9, 0.4, 0, Math.PI*2); fctx.fill();
+  });
+  // eyes
+  fctx.fillStyle = '#241c1c';
+  [180, 332].forEach(cx=>{
+    fctx.beginPath(); fctx.ellipse(cx, 175, 26, 34, 0, 0, Math.PI*2); fctx.fill();
+  });
+  fctx.fillStyle = 'rgba(255,255,255,0.9)';
+  [180, 332].forEach(cx=>{
+    fctx.beginPath(); fctx.ellipse(cx-8, 162, 7, 9, 0, 0, Math.PI*2); fctx.fill();
+  });
+  // smile
+  fctx.strokeStyle = '#241c1c';
+  fctx.lineWidth = 9;
+  fctx.lineCap = 'round';
+  fctx.beginPath();
+  fctx.moveTo(226, 232);
+  fctx.quadraticCurveTo(256, 264, 286, 232);
+  fctx.stroke();
+
+  const faceTex = new THREE.CanvasTexture(faceCanvas);
+  const faceMat = new THREE.MeshBasicMaterial({map: faceTex, transparent:true, depthWrite:false});
+  const facePlane = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.0), faceMat);
+  facePlane.position.set(0, -0.12, 1.42);
+  facePlane.renderOrder = 1;
+
+  const rig = new THREE.Group();
+  rig.add(mesh);
+  rig.add(facePlane);
+  scene.add(rig);
+
+  // Bottom of the sculpted mesh sits ~0.641 below the rig origin (radius 1.35,
+  // flattened *0.5 below the equator, scaled by mesh.scale.y 0.95).
+  const BOTTOM_OFFSET = 0.641;
+  const REST_Y = FLOOR_Y + BOTTOM_OFFSET;
+  rig.position.set(0, REST_Y, 0);
+
+  const STIFFNESS = 55;
+  const DAMPING = 7;
+  const GRAVITY = 9.5;
+  const BOUND_X = 2.2, BOUND_Z = 1.4;
+
+  let isHeld = false;
+  let velY = 0;
+  const velXZ = {x:0, z:0};
+  const holdBase = {x:0, y:0, z:0};
+  const prevRig = {x:0, y:REST_Y, z:0};
+
+  const raycaster = new THREE.Raycaster();
+  const pointerNdc = new THREE.Vector2();
+  let dragging = false, moved = false, startClientX = 0, startClientY = 0;
+  let grabLocal = null;      // grab point in mesh local space (on rest shape)
+  let grabWorld = null;      // grab point in world space at drag start
+  let dragPlane = null;
+  let lastSoundAt = 0;
+
+  function squashImpact(impact){
+    for(let i=0;i<vertCount;i++){
+      const ix = i*3;
+      const by = basePositions[ix+1];
+      const factor = THREE.MathUtils.clamp((0.9-by)/1.8, 0, 1);
+      velocity[ix+1] -= impact * 3.2 * factor;
+      velocity[ix]   += Math.sign(basePositions[ix]||1) * impact * 0.9 * factor;
+      velocity[ix+2] += Math.sign(basePositions[ix+2]||1) * impact * 0.9 * factor;
+    }
+  }
+
+  function getPointer(e){
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+    return {x: t.clientX, y: t.clientY};
+  }
+
+  function ndcFromClient(x, y){
+    const rect = canvas.getBoundingClientRect();
+    return new THREE.Vector2(
+      ((x - rect.left) / rect.width) * 2 - 1,
+      -((y - rect.top) / rect.height) * 2 + 1
+    );
+  }
+
+  function onDown(e){
+    const p = getPointer(e);
+    startClientX = p.x; startClientY = p.y;
+    moved = false;
+
+    pointerNdc.copy(ndcFromClient(p.x, p.y));
+    raycaster.setFromCamera(pointerNdc, camera);
+    const hits = raycaster.intersectObject(mesh);
+    if(!hits.length) return;
+
+    dragging = true;
+    isHeld = true;
+    velY = 0; velXZ.x = 0; velXZ.z = 0;
+    holdBase.x = rig.position.x; holdBase.y = rig.position.y; holdBase.z = rig.position.z;
+    prevRig.x = rig.position.x; prevRig.y = rig.position.y; prevRig.z = rig.position.z;
+
+    grabWorld = hits[0].point.clone();
+    grabLocal = mesh.worldToLocal(hits[0].point.clone());
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, grabWorld);
+
+    playTone(520, 0.08, 'sine', 0, 0.06); // soft "grab" blip
+  }
+
+  function onMove(e){
+    if(!dragging || !grabWorld) return;
+    const p = getPointer(e);
+    if(Math.abs(p.x - startClientX) > 4 || Math.abs(p.y - startClientY) > 4) moved = true;
+
+    pointerNdc.copy(ndcFromClient(p.x, p.y));
+    raycaster.setFromCamera(pointerNdc, camera);
+    const hitPoint = new THREE.Vector3();
+    if(raycaster.ray.intersectPlane(dragPlane, hitPoint)){
+      const dragWorldVec = hitPoint.clone().sub(grabWorld);
+
+      // Pick the whole bun up and carry it partway toward the finger (a little
+      // lag left over, which the local stretch below fills in for a springy grip feel).
+      const LIFT = 0.7;
+      rig.position.x = holdBase.x + dragWorldVec.x * LIFT;
+      rig.position.y = Math.max(holdBase.y + dragWorldVec.y * LIFT, REST_Y - 0.15);
+      rig.position.z = holdBase.z + dragWorldVec.z * LIFT;
+      rig.position.x = THREE.MathUtils.clamp(rig.position.x, -BOUND_X, BOUND_X);
+      rig.position.z = THREE.MathUtils.clamp(rig.position.z, -BOUND_Z, BOUND_Z);
+
+      // Convert the world-space drag vector into the mesh's local space for the surface stretch.
+      const dragLocalVec = mesh.worldToLocal(grabWorld.clone().add(dragWorldVec))
+        .sub(mesh.worldToLocal(grabWorld.clone()));
+
+      const RADIUS = 1.6;
+      const gx = grabLocal.x, gy = grabLocal.y, gz = grabLocal.z;
+      for(let i=0;i<vertCount;i++){
+        const ix = i*3;
+        const bx = basePositions[ix], by = basePositions[ix+1], bz = basePositions[ix+2];
+        const dx = bx-gx, dy = by-gy, dz = bz-gz;
+        const dist = Math.sqrt(dx*dx+dy*dy+dz*dz);
+        let falloff = 1 - dist/RADIUS;
+        if(falloff < 0) falloff = 0;
+        falloff = falloff*falloff*(3 - 2*falloff); // smoothstep
+        target[ix]   = dragLocalVec.x * falloff;
+        target[ix+1] = dragLocalVec.y * falloff;
+        target[ix+2] = dragLocalVec.z * falloff;
+      }
+    }
+    if(e.cancelable) e.preventDefault();
+  }
+
+  function onUp(e){
+    if(!dragging) return;
+    dragging = false;
+    isHeld = false;
+
+    if(!moved){
+      // Treat as a poke: snap back onto the floor, push vertices near the tap
+      // inward along the surface normal, then let it jiggle back.
+      rig.position.x = holdBase.x; rig.position.y = holdBase.y; rig.position.z = holdBase.z;
+      velY = 0; velXZ.x = 0; velXZ.z = 0;
+
+      const p = getPointer(e);
+      pointerNdc.copy(ndcFromClient(p.x, p.y));
+      raycaster.setFromCamera(pointerNdc, camera);
+      const hits = raycaster.intersectObject(mesh);
+      if(hits.length){
+        const hitLocal = mesh.worldToLocal(hits[0].point.clone());
+        const normal = hitLocal.clone().normalize();
+        const RADIUS = 1.3;
+        for(let i=0;i<vertCount;i++){
+          const ix = i*3;
+          const bx = basePositions[ix], by = basePositions[ix+1], bz = basePositions[ix+2];
+          const dx = bx-hitLocal.x, dy = by-hitLocal.y, dz = bz-hitLocal.z;
+          const dist = Math.sqrt(dx*dx+dy*dy+dz*dz);
+          let falloff = 1 - dist/RADIUS;
+          if(falloff < 0) falloff = 0;
+          falloff = falloff*falloff;
+          velocity[ix]   -= normal.x * falloff * 6;
+          velocity[ix+1] -= normal.y * falloff * 6;
+          velocity[ix+2] -= normal.z * falloff * 6;
+        }
+      }
+      playTone(700, 0.1, 'sine', 0, 0.1);
+      playTone(420, 0.18, 'sine', 0.06, 0.08);
+    } else {
+      // Let go after lifting/stretching: the local surface springs home, and the
+      // whole bun keeps whatever velocity it had (tracked each frame while held)
+      // so it drops and bounces on the floor.
+      playSweep(300, 700, 0.3, 'sine', 0, 0.12);
+    }
+
+    target.fill(0);
+    grabWorld = null; grabLocal = null; dragPlane = null;
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, {passive:true});
+  canvas.addEventListener('touchmove', onMove, {passive:false});
+  canvas.addEventListener('touchend', onUp);
+
+  let raf = null;
+  let t = 0;
+  const dt = 1/60;
+  function animate(){
+    raf = requestAnimationFrame(animate);
+    t += dt;
+
+    let totalMove = 0;
+    for(let i=0;i<vertCount;i++){
+      const ix = i*3;
+      for(let k=0; k<3; k++){
+        const j = ix+k;
+        const accel = (target[j]-offset[j])*STIFFNESS - velocity[j]*DAMPING;
+        velocity[j] += accel*dt;
+        offset[j] += velocity[j]*dt;
+        totalMove += Math.abs(velocity[j]);
+        posAttr.array[j] = basePositions[j] + offset[j];
+      }
+    }
+    posAttr.needsUpdate = true;
+    geo.computeVertexNormals();
+
+    // A very soft, occasional wobble tick sound while it's actively jiggling back (not while actively dragging).
+    if(!dragging && totalMove > 20 && performance.now() - lastSoundAt > 260){
+      lastSoundAt = performance.now();
+    }
+
+    if(isHeld){
+      // Track how fast it's being carried so letting go gives it real momentum.
+      velY = (rig.position.y - prevRig.y) / dt;
+      velXZ.x = (rig.position.x - prevRig.x) / dt;
+      velXZ.z = (rig.position.z - prevRig.z) / dt;
+    } else {
+      velY -= GRAVITY * dt;
+      rig.position.y += velY * dt;
+      rig.position.x += velXZ.x * dt;
+      rig.position.z += velXZ.z * dt;
+      velXZ.x *= 0.985;
+      velXZ.z *= 0.985;
+
+      if(rig.position.x > BOUND_X){ rig.position.x = BOUND_X; velXZ.x *= -0.4; }
+      if(rig.position.x < -BOUND_X){ rig.position.x = -BOUND_X; velXZ.x *= -0.4; }
+      if(rig.position.z > BOUND_Z){ rig.position.z = BOUND_Z; velXZ.z *= -0.4; }
+      if(rig.position.z < -BOUND_Z){ rig.position.z = -BOUND_Z; velXZ.z *= -0.4; }
+
+      if(rig.position.y <= REST_Y){
+        rig.position.y = REST_Y;
+        if(Math.abs(velY) > 0.4){
+          velY = -velY * 0.42; // bounce, losing some energy each time
+          const impact = Math.min(Math.abs(velY) * 1.8, 1.3);
+          squashImpact(impact);
+          const vol = Math.min(0.06 + impact*0.16, 0.26);
+          playSweep(190, 85, 0.13, 'sine', 0, vol);
+        } else {
+          velY = 0;
+          velXZ.x *= 0.8; velXZ.z *= 0.8;
+        }
+      }
+
+      // Gentle idle sway only once it's settled back on the floor.
+      const settled = Math.abs(velY) < 0.05 && Math.abs(rig.position.y - REST_Y) < 0.02
+        && Math.abs(velXZ.x) < 0.05 && Math.abs(velXZ.z) < 0.05;
+      if(settled){
+        rig.rotation.y = Math.sin(t*0.55) * 0.22;
+      }
+    }
+
+    prevRig.x = rig.position.x; prevRig.y = rig.position.y; prevRig.z = rig.position.z;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  function onResize(){
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    if(w === 0 || h === 0) return;
+    renderer.setSize(w, h);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onResize);
+
+  if(secretScene && secretScene.dispose) secretScene.dispose();
+  secretScene = {
+    dispose(){
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('mouseup', onUp);
+    }
+  };
 }
 
 loadPlayers();
