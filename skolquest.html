@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Skolquest</title>
+<!--
+  VERSION LOG (bump the "v1.0" text near the bottom of the page + add a line here on every change)
+  v1.0 — 2026-09-30 — Version number added to the footer, starting the changelog.
+  v1.1 — 2026-09-30 — Daily login streaks: 🔥 badge on the home screen, tracked per player locally and in the cloud.
+  v1.2 — 2026-09-30 — Big update: sounds on every answer, a lifetime Robux wallet, an avatar shop, 7 badges/trophies,
+         a second palette-swapped secret room (unlocks at 1000 lifetime Robux), 3-star confetti, a Daily Challenge
+         (5 mixed glosor, +100 bonus, once per day), standalone 2-player Duel mode, and English text-to-speech (🔊).
+-->
 <style>
   :root{
     --bg1:#0b1020;
@@ -133,6 +141,10 @@
     padding:8px 12px; margin-bottom:14px; font-size:0.95em;
   }
   .player-bar .who{font-weight:800; color:var(--accent2);}
+  .streak-badge{
+    font-size:0.8em; color:#ffb347; font-weight:700; margin-top:2px;
+  }
+  .streak-badge.hidden{display:none;}
   .player-bar button{
     background:none; border:1px solid #3a4590; color:var(--text);
     border-radius:8px; padding:5px 10px; font-size:0.85em; cursor:pointer;
@@ -265,6 +277,64 @@
     border:1px solid #3a4590; background:rgba(255,255,255,0.05); color:var(--text);
   }
   .admin-row .abtns .danger{border-color:var(--danger); color:#ff9aa2;}
+  .shop-item{
+    display:flex; align-items:center; gap:12px;
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; border-radius:14px; padding:12px 14px; margin-bottom:10px;
+  }
+  .shop-item .emoji{font-size:2em; width:48px; text-align:center;}
+  .shop-item .info{flex:1;}
+  .shop-item .info .price{font-size:0.85em; opacity:0.75;}
+  .shop-item button{
+    border-radius:10px; padding:8px 14px; font-weight:700; font-size:0.9em; cursor:pointer;
+    border:1px solid var(--accent2); background:rgba(124,255,0,0.12); color:var(--accent2);
+  }
+  .shop-item button:disabled{opacity:0.4; cursor:default;}
+  .shop-item button.owned{border-color:#3a4590; background:none; color:var(--text);}
+  .badge-card{
+    display:flex; align-items:center; gap:12px;
+    background:linear-gradient(135deg,#1c2559,#131a3f);
+    border:2px solid #3a4590; border-radius:14px; padding:12px 14px; margin-bottom:10px;
+    opacity:0.4;
+  }
+  .badge-card.earned{opacity:1; border-color:var(--accent2); box-shadow:0 0 14px rgba(124,255,0,0.25);}
+  .badge-card .emoji{font-size:2.2em; width:48px; text-align:center;}
+  .badge-card .name{font-weight:800;}
+  .badge-card .desc{font-size:0.85em; opacity:0.8;}
+  .confetti-piece{
+    position:fixed; top:-20px; width:9px; height:15px; opacity:0.95;
+    pointer-events:none; z-index:99999; border-radius:2px;
+    animation-name:confettiFall; animation-timing-function:linear; animation-fill-mode:forwards;
+  }
+  @keyframes confettiFall{
+    to{ transform:translateY(110vh) rotate(720deg); opacity:0.3; }
+  }
+  .daily-card{
+    display:flex; align-items:center; gap:12px;
+    background:linear-gradient(135deg, rgba(255,209,102,0.18), rgba(255,107,129,0.12));
+    border:2px solid #ffb347; border-radius:16px; padding:14px; margin-bottom:16px;
+    cursor:pointer;
+  }
+  .daily-card.done{opacity:0.6; cursor:default;}
+  .daily-card .icon{font-size:2em;}
+  .daily-card .info{flex:1;}
+  .daily-card .title{font-weight:800;}
+  .daily-card .sub{font-size:0.82em; opacity:0.8;}
+  .speak-btn{
+    margin-top:10px; border:1px solid var(--accent); background:rgba(0,229,255,0.1);
+    color:var(--text); border-radius:20px; padding:8px 16px; font-size:0.9em; cursor:pointer;
+  }
+  .speak-btn.hidden{display:none;}
+  .duel-player-label{
+    text-align:center; font-weight:900; margin-bottom:10px; font-size:1.15em;
+    color:var(--accent2); text-shadow:0 0 10px rgba(124,255,0,0.4);
+  }
+  .duel-result-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background:rgba(255,255,255,0.05); border:1px solid #3a4590; border-radius:12px;
+    padding:12px 14px; margin-bottom:10px; text-align:left;
+  }
+  .duel-result-row.winner{border-color:var(--accent2); box-shadow:0 0 14px rgba(124,255,0,0.3);}
   /* ---------- QUIZ ---------- */
   .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.9em; gap:8px; flex-wrap:wrap;}
   .robux{
@@ -366,9 +436,15 @@
     <!-- HOME / LEVEL SELECT -->
     <div id="homeArea" class="hidden">
       <div class="player-bar">
-        <div>Spelar som: <span class="who" id="playerName"></span></div>
+        <div>
+          Spelar som: <span class="who" id="playerName"></span>
+          <div id="streakBadge" class="streak-badge hidden"></div>
+        </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button onclick="goLeaderboard()">🏆 Topplista</button>
+          <button onclick="goShop()">🛍️ Butik</button>
+          <button onclick="goBadges()">🏅 Badges</button>
+          <button onclick="goDuel()">⚔️ Duell</button>
           <button onclick="changeAvatar()">🎭 Byt avatar</button>
           <button onclick="showNameScreen()">Byt spelare</button>
         </div>
@@ -377,6 +453,7 @@
         <div class="num" id="totalScore">0</div>
         <div class="lbl">Totalt antal Robux (alla nivåer)</div>
       </div>
+      <div id="dailyChallengeWrap"></div>
       <div class="section-lbl">Engelska glosor</div>
       <div class="levels" id="levelListWords"></div>
       <div class="section-lbl">Matte</div>
@@ -397,6 +474,31 @@
       <div id="leaderboardList"></div>
     </div>
 
+    <!-- SHOP -->
+    <div id="shopArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">🛍️ Butik</div>
+        <div></div>
+      </div>
+      <div class="total-box">
+        <div class="num" id="walletBalance">0</div>
+        <div class="lbl">Robux i plånboken</div>
+      </div>
+      <div class="section-lbl" style="margin-top:0;">Köp nya avatarer</div>
+      <div id="shopList"></div>
+    </div>
+
+    <!-- BADGES -->
+    <div id="badgesArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">🏅 Badges</div>
+        <div></div>
+      </div>
+      <div id="badgesList"></div>
+    </div>
+
     <!-- ADMIN -->
     <div id="adminArea" class="hidden">
       <div class="topbar">
@@ -406,8 +508,43 @@
       </div>
       <div class="section-lbl" style="margin-top:0;">Spelare</div>
       <div id="adminList"></div>
-      <button class="menu-btn" style="width:100%; margin-top:10px;" onclick="goSecretRoom()">🌀 Testa hemliga rummet</button>
+      <button class="menu-btn" style="width:100%; margin-top:10px;" onclick="goSecretRoom(1)">🌀 Testa hemliga rummet 1</button>
+      <button class="menu-btn" style="width:100%; margin-top:10px;" onclick="goSecretRoom(2)">🌈 Testa hemliga rummet 2</button>
       <button class="menu-btn" style="width:100%; background:linear-gradient(135deg,#8b1e1e,#4a0f0f); margin-top:10px;" onclick="adminResetAll()">🗑️ Nollställ alla spelare</button>
+    </div>
+
+    <!-- DUEL -->
+    <div id="duelArea" class="hidden">
+      <div class="topbar">
+        <button class="backbtn" onclick="goHome()">⬅ Nivåer</button>
+        <div style="font-weight:800;">⚔️ Duell-läge</div>
+        <div></div>
+      </div>
+
+      <div id="duelSetup">
+        <div class="section-lbl" style="margin-top:0;">Välj nivå att duellera i</div>
+        <div class="levels" id="duelLevelList"></div>
+      </div>
+
+      <div id="duelReadyArea" class="hidden" style="text-align:center;">
+        <div style="font-size:1.1em; margin-bottom:14px;" id="duelReadyText"></div>
+        <button class="go-btn" onclick="duelBeginPlaying()" style="width:100%;">Redo! Kör 🚀</button>
+      </div>
+
+      <div id="duelPlayArea" class="hidden">
+        <div class="duel-player-label" id="duelPlayerLabel">Spelare 1</div>
+        <div class="word-box">
+          <div class="word-label" id="duelQLabel"></div>
+          <div class="word" id="duelQText">?</div>
+        </div>
+        <div class="options" id="duelOptions"></div>
+      </div>
+
+      <div id="duelResultArea2" class="hidden" style="text-align:center;">
+        <div id="duelResultContent"></div>
+        <button class="menu-btn" onclick="goDuelSetup()" style="width:100%;">Ny duell 🔁</button>
+        <button class="menu-btn" onclick="goHome()" style="width:100%;">Till nivåval 🗺️</button>
+      </div>
     </div>
 
     <!-- SECRET 3D ROOM -->
@@ -433,6 +570,7 @@
       <div class="word-box" id="wordBox">
         <div class="word-label" id="wordLabel">Vad betyder</div>
         <div class="word" id="wordText">?</div>
+        <button id="speakBtn" class="speak-btn hidden" onclick="speakEnglish(currentSpeakWord)">🔊 Lyssna</button>
       </div>
 
       <div id="storyArea" class="hidden">
@@ -463,13 +601,14 @@
       <h2 id="resultTitle">Bra jobbat!</h2>
       <div class="stars" id="resultStars"></div>
       <p id="resultText"></p>
-      <button class="restart-btn" onclick="startLevel(currentLevelId)">Spela nivån igen 🔁</button>
+      <button class="restart-btn" onclick="restartCurrentLevel()">Spela nivån igen 🔁</button>
       <button class="menu-btn" onclick="goHome()">Till nivåval 🗺️</button>
     </div>
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px;">
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.2</div>
+  <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
 </div>
@@ -681,12 +820,25 @@ let currentWords = [];
 let currentReadingPages = [];
 let readingAttemptWrong = false;
 let currentLevelType = "words";
+let currentSpeakWord = "";
+
+function speakEnglish(word){
+  try{
+    if(!word || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US';
+    u.rate = 0.88;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* speech unavailable, ignore */ }
+}
 
 const AVATARS = ["🤖","🦸","🥷","🧙","🐉","🦊","🐱","👾","🚀","⚡","🎮","🦄"];
 let selectedAvatar = AVATARS[0];
 
 // ---------- SECRET ROOM UNLOCK ----------
-const SECRET_GOAL = 300;
+const SECRET_GOAL = 300;       // room 1: this session's robux
+const SECRET_GOAL_2 = 1000;    // room 2: lifetime wallet balance
 let sessionEarned = 0;
 let secretUnlocked = false;
 
@@ -694,14 +846,28 @@ function addSessionPoints(n){
   sessionEarned += n;
   if(!secretUnlocked && sessionEarned >= SECRET_GOAL){
     secretUnlocked = true;
-    showUnlockToast();
+    showUnlockToast("🌀✨", "Hemliga rummet upplåst!", "Gå till nivåskärmen för att kolla in det");
   }
   renderSecretTeaser();
 }
 
-function showUnlockToast(){
+function addWallet(n){
+  if(!levelScores) return;
+  const had = levelScores.wallet || 0;
+  levelScores.wallet = had + n;
+  if(had < SECRET_GOAL_2 && levelScores.wallet >= SECRET_GOAL_2){
+    showUnlockToast("🌈✨", "Rum 2 upplåst!", "Du har samlat ihop 1000 Robux totalt!");
+  }
+  savePlayers();
+  renderSecretTeaser();
+}
+
+function showUnlockToast(emoji, title, sub){
   const toast = document.getElementById('unlockToast');
   if(!toast) return;
+  toast.querySelector('.ut-emoji').textContent = emoji;
+  toast.querySelector('.ut-title').textContent = title;
+  toast.querySelector('.ut-sub').textContent = sub;
   toast.classList.remove('hidden');
   setTimeout(()=>{ toast.classList.add('hidden'); }, 4000);
 }
@@ -709,34 +875,56 @@ function showUnlockToast(){
 function renderSecretTeaser(){
   const wrap = document.getElementById('secretTeaserWrap');
   if(!wrap) return;
+  let html = '';
+
   if(secretUnlocked){
-    wrap.innerHTML = `
-      <div class="secret-teaser unlocked" onclick="goSecretRoom()">
+    html += `
+      <div class="secret-teaser unlocked" onclick="goSecretRoom(1)">
         <div class="st-title">🌀 Hemliga rummet är upplåst!</div>
         <div class="st-sub">Tryck här för att gå in</div>
-      </div>
-    `;
+      </div>`;
   } else {
     const pct = Math.min(100, Math.round((sessionEarned / SECRET_GOAL) * 100));
-    wrap.innerHTML = `
+    html += `
       <div class="secret-teaser locked">
         <div class="st-title">🔒 ??? Hemligt rum</div>
         <div class="st-sub">Samla ${SECRET_GOAL} Robux under samma omgång för att låsa upp</div>
         <div class="st-progress"><div class="st-progress-fill" style="width:${pct}%"></div></div>
         <div class="st-sub">${sessionEarned} / ${SECRET_GOAL}</div>
-      </div>
-    `;
+      </div>`;
   }
+
+  const wallet = (levelScores && levelScores.wallet) || 0;
+  if(wallet >= SECRET_GOAL_2){
+    html += `
+      <div class="secret-teaser unlocked" onclick="goSecretRoom(2)">
+        <div class="st-title">🌈 Rum 2 är upplåst!</div>
+        <div class="st-sub">Tryck här för att gå in</div>
+      </div>`;
+  } else {
+    const pct2 = Math.min(100, Math.round((wallet / SECRET_GOAL_2) * 100));
+    html += `
+      <div class="secret-teaser locked">
+        <div class="st-title">🔒 ??? Rum 2</div>
+        <div class="st-sub">Samla ${SECRET_GOAL_2} Robux totalt (din plånbok) för att låsa upp</div>
+        <div class="st-progress"><div class="st-progress-fill" style="width:${pct2}%"></div></div>
+        <div class="st-sub">${wallet} / ${SECRET_GOAL_2}</div>
+      </div>`;
+  }
+
+  wrap.innerHTML = html;
 }
 
 function avatarFor(name){
   return (players[name] && players[name].avatar) || "🙂";
 }
 
+let avatarChoices = AVATARS;
+
 function renderAvatarGrid(){
   const grid = document.getElementById('avatarGrid');
   grid.innerHTML = '';
-  AVATARS.forEach(a=>{
+  avatarChoices.forEach(a=>{
     const b = document.createElement('button');
     b.textContent = a;
     b.type = 'button';
@@ -755,10 +943,14 @@ function showNameScreen(){
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
   document.getElementById('bodyEl').className = '';
   document.getElementById('subtitle').textContent = "Vem ska öva idag?";
 
   selectedAvatar = AVATARS[0];
+  avatarChoices = AVATARS;
   renderAvatarGrid();
 
   const wrap = document.getElementById('quickPlayersWrap');
@@ -772,6 +964,7 @@ function showNameScreen(){
       b.onclick = ()=>{
         document.getElementById('nameInput').value = n;
         selectedAvatar = players[n].avatar || AVATARS[0];
+        avatarChoices = AVATARS.concat(players[n].unlockedAvatars || []);
         renderAvatarGrid();
         submitName();
       };
@@ -790,6 +983,7 @@ function showNameScreen(){
     const capitalized = typed.charAt(0).toUpperCase() + typed.slice(1);
     if(players[capitalized] && players[capitalized].avatar){
       selectedAvatar = players[capitalized].avatar;
+      avatarChoices = AVATARS.concat(players[capitalized].unlockedAvatars || []);
       renderAvatarGrid();
     }
   };
@@ -803,12 +997,39 @@ function changeAvatar(){
   document.getElementById('quickPlayersWrap').innerHTML = '';
 
   selectedAvatar = (players[currentUser] && players[currentUser].avatar) || AVATARS[0];
+  avatarChoices = AVATARS.concat((players[currentUser] && players[currentUser].unlockedAvatars) || []);
   renderAvatarGrid();
 
   const input = document.getElementById('nameInput');
   input.value = currentUser;
   input.onkeydown = (e)=>{ if(e.key==='Enter') submitName(); };
   input.oninput = null;
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function yesterdayStr(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function updateStreak(){
+  const p = levelScores; // same object as players[currentUser]
+  if(!p.streak) p.streak = {count:0, best:0, lastDate:null};
+  const today = todayStr();
+  if(p.streak.lastDate === today){
+    // already logged in today, leave the count as is
+  } else if(p.streak.lastDate === yesterdayStr()){
+    p.streak.count = (p.streak.count || 0) + 1;
+  } else {
+    p.streak.count = 1;
+  }
+  p.streak.lastDate = today;
+  p.streak.best = Math.max(p.streak.best || 0, p.streak.count);
+  checkBadges();
 }
 
 async function submitName(){
@@ -819,6 +1040,7 @@ async function submitName(){
   if(!players[currentUser]) players[currentUser] = {};
   levelScores = players[currentUser];
   levelScores.avatar = selectedAvatar;
+  updateStreak();
   savePlayers();
   sessionEarned = 0;
   secretUnlocked = false;
@@ -832,6 +1054,7 @@ async function submitName(){
       players[currentUser] = cloudLevels;
       players[currentUser].avatar = selectedAvatar; // the avatar just picked this session wins
       levelScores = players[currentUser];
+      updateStreak(); // recompute from the cloud's streak data too, in case they played elsewhere yesterday
       savePlayers();
       renderHome();
       if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
@@ -858,10 +1081,22 @@ function renderHome(){
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
   document.getElementById('subtitle').textContent = "Välj nivå och samla robux!";
   document.getElementById('bodyEl').className = '';
   document.getElementById('playerName').textContent = `${avatarFor(currentUser)} ${currentUser}`;
+  const streakBadge = document.getElementById('streakBadge');
+  const streakCount = (levelScores.streak && levelScores.streak.count) || 0;
+  if(streakCount >= 2){
+    streakBadge.textContent = `🔥 ${streakCount} dagar i rad!`;
+    streakBadge.classList.remove('hidden');
+  } else {
+    streakBadge.classList.add('hidden');
+  }
   renderSecretTeaser();
+  renderDailyCard();
 
   let total = 0;
   const wordList = document.getElementById('levelListWords');
@@ -910,6 +1145,9 @@ async function goAdmin(){
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
   document.getElementById('adminArea').classList.remove('hidden');
   document.getElementById('subtitle').textContent = "Hantera spelare";
   document.getElementById('bodyEl').className = '';
@@ -996,6 +1234,9 @@ async function goLeaderboard(){
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
   document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.remove('hidden');
   document.getElementById('subtitle').textContent = "Vem har flest robux?";
   document.getElementById('bodyEl').className = '';
@@ -1067,6 +1308,416 @@ function renderLeaderboard(){
   return;
 }
 
+// ---------- SHOP ----------
+const SHOP_AVATARS = [
+  {emoji:"🐸", price:50},
+  {emoji:"🦖", price:80},
+  {emoji:"🐠", price:80},
+  {emoji:"🍕", price:120},
+  {emoji:"👻", price:150},
+  {emoji:"🤠", price:200}
+];
+
+function goShop(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Spendera dina Robux!";
+  document.getElementById('bodyEl').className = '';
+  renderShop();
+}
+
+function renderShop(){
+  const wallet = (levelScores && levelScores.wallet) || 0;
+  document.getElementById('walletBalance').textContent = wallet;
+  const owned = (levelScores && levelScores.unlockedAvatars) || [];
+  const list = document.getElementById('shopList');
+  list.innerHTML = '';
+  SHOP_AVATARS.forEach(item=>{
+    const isOwned = owned.includes(item.emoji);
+    const isSelected = levelScores && levelScores.avatar === item.emoji;
+    const div = document.createElement('div');
+    div.className = 'shop-item';
+    let btnHtml;
+    if(isSelected){
+      btnHtml = `<button class="owned" disabled>Vald</button>`;
+    } else if(isOwned){
+      btnHtml = `<button onclick="selectOwnedAvatar('${item.emoji}')">Välj</button>`;
+    } else {
+      const canAfford = wallet >= item.price;
+      btnHtml = `<button ${canAfford ? '' : 'disabled'} onclick="buyAvatar('${item.emoji}', ${item.price})">Köp</button>`;
+    }
+    div.innerHTML = `
+      <div class="emoji">${item.emoji}</div>
+      <div class="info">
+        <div>${isOwned ? 'Upplåst' : `Kostar ${item.price} 🪙`}</div>
+      </div>
+      ${btnHtml}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function buyAvatar(emoji, price){
+  const wallet = levelScores.wallet || 0;
+  if(wallet < price) return;
+  levelScores.wallet = wallet - price;
+  if(!levelScores.unlockedAvatars) levelScores.unlockedAvatars = [];
+  levelScores.unlockedAvatars.push(emoji);
+  levelScores.avatar = emoji;
+  avatarChoices = AVATARS.concat(levelScores.unlockedAvatars);
+  savePlayers();
+  if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
+  playTone(660, 0.1, 'sine', 0, 0.12);
+  playTone(990, 0.14, 'sine', 0.08, 0.1);
+  renderShop();
+}
+
+function selectOwnedAvatar(emoji){
+  levelScores.avatar = emoji;
+  savePlayers();
+  if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
+  renderShop();
+}
+
+// ---------- BADGES ----------
+const BADGES = [
+  {id:'perfect_level', emoji:'⭐', name:'Perfekt nivå', desc:'Klara en nivå med full poäng',
+    test:(p)=>levels.some(l=>p[l.id] && p[l.id].max && p[l.id].best >= p[l.id].max)},
+  {id:'first_try', emoji:'🎯', name:'Perfekt direkt', desc:'Klara en nivå perfekt på första försöket',
+    test:(p)=>levels.some(l=>p[l.id] && p[l.id].plays === 1 && p[l.id].max && p[l.id].best >= p[l.id].max)},
+  {id:'streak_3', emoji:'🔥', name:'3 dagar i rad', desc:'Logga in 3 dagar i rad',
+    test:(p)=>p.streak && p.streak.best >= 3},
+  {id:'streak_7', emoji:'🔥', name:'7 dagar i rad', desc:'Logga in 7 dagar i rad',
+    test:(p)=>p.streak && p.streak.best >= 7},
+  {id:'rich', emoji:'💰', name:'Robux-rik', desc:'Samla 500 Robux totalt',
+    test:(p)=>(p.wallet||0) >= 500},
+  {id:'bookworm', emoji:'📚', name:'Bokmask', desc:'Klara hela läs-äventyret',
+    test:(p)=>p[4] && p[4].plays >= 1},
+  {id:'math_whiz', emoji:'🧮', name:'Mattegeni', desc:'Full poäng på gångertabellen',
+    test:(p)=>p[3] && p[3].max && p[3].best >= p[3].max}
+];
+
+function checkBadges(){
+  if(!levelScores) return;
+  if(!levelScores.badges) levelScores.badges = {};
+  let newOne = null;
+  BADGES.forEach(b=>{
+    if(!levelScores.badges[b.id] && b.test(levelScores)){
+      levelScores.badges[b.id] = true;
+      newOne = b;
+    }
+  });
+  if(newOne){
+    savePlayers();
+    if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
+    showUnlockToast(newOne.emoji, `Ny badge: ${newOne.name}!`, newOne.desc);
+  }
+}
+
+function goBadges(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Dina troféer";
+  document.getElementById('bodyEl').className = '';
+  renderBadges();
+}
+
+function renderBadges(){
+  const earned = (levelScores && levelScores.badges) || {};
+  const list = document.getElementById('badgesList');
+  list.innerHTML = '';
+  BADGES.forEach(b=>{
+    const have = !!earned[b.id];
+    const div = document.createElement('div');
+    div.className = 'badge-card' + (have ? ' earned' : '');
+    div.innerHTML = `
+      <div class="emoji">${have ? b.emoji : '🔒'}</div>
+      <div>
+        <div class="name">${b.name}</div>
+        <div class="desc">${b.desc}</div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ---------- DUEL MODE (standalone, no robux/profile effects) ----------
+let duelQuestions = [];
+let duelStage = 1;      // 1 or 2 (which player is currently playing)
+let duelIndex = 0;
+let duelCorrect = 0;
+let duelAnswered = false;
+let duelStartTime = 0;
+let duelP1 = null, duelP2 = null;
+let duelPlayerName2 = "Spelare 2";
+
+function goDuel(){
+  document.getElementById('nameArea').classList.add('hidden');
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('leaderboardArea').classList.add('hidden');
+  document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('secretArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.remove('hidden');
+  document.getElementById('subtitle').textContent = "Två spelare, samma frågor!";
+  document.getElementById('bodyEl').className = '';
+  goDuelSetup();
+}
+
+function goDuelSetup(){
+  document.getElementById('duelSetup').classList.remove('hidden');
+  document.getElementById('duelReadyArea').classList.add('hidden');
+  document.getElementById('duelPlayArea').classList.add('hidden');
+  document.getElementById('duelResultArea2').classList.add('hidden');
+  duelP1 = null; duelP2 = null;
+  const list = document.getElementById('duelLevelList');
+  list.innerHTML = '';
+  levels.filter(l=>l.type !== 'reading').forEach(lvl=>{
+    const div = document.createElement('div');
+    div.className = 'level-card';
+    div.onclick = ()=>pickDuelLevel(lvl);
+    div.innerHTML = `
+      <div class="icon">${lvl.icon}</div>
+      <div class="info"><div class="name">${lvl.name}</div><div class="meta">${lvl.meta}</div></div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function buildDuelQuestions(lvl){
+  if(lvl.type === 'math'){
+    return generateMathFacts(lvl.tables).slice(0,8).map(f=>{
+      const correct = f.product;
+      const distractorSet = new Set();
+      while(distractorSet.size < 3){
+        const offsetOptions = [f.a, -f.a, f.a*2, -f.a*2, f.b, -f.b, 1, -1, 2, -2];
+        const off = offsetOptions[Math.floor(Math.random()*offsetOptions.length)];
+        const cand = correct + off;
+        if(cand > 0 && cand !== correct) distractorSet.add(cand);
+      }
+      const opts = shuffle([correct, ...distractorSet]).map(String);
+      return {label:'Räkna ut:', prompt:`${f.a} × ${f.b}`, options:opts, correctIdx: opts.indexOf(String(correct))};
+    });
+  }
+  return shuffle(lvl.words).slice(0,8).map(w=>{
+    const correct = w.sv[0];
+    const pool = lvl.words.map(x=>x.sv[0]).filter(x=>x!==correct);
+    const distractors = shuffle(pool).slice(0,3);
+    const opts = shuffle([correct, ...distractors]);
+    return {label:'Vad betyder på svenska:', prompt:w.en, options:opts, correctIdx: opts.indexOf(correct)};
+  });
+}
+
+function pickDuelLevel(lvl){
+  duelQuestions = buildDuelQuestions(lvl);
+  duelStage = 1;
+  showDuelReady(1);
+}
+
+function showDuelReady(playerNum){
+  duelStage = playerNum;
+  document.getElementById('duelSetup').classList.add('hidden');
+  document.getElementById('duelPlayArea').classList.add('hidden');
+  document.getElementById('duelResultArea2').classList.add('hidden');
+  document.getElementById('duelReadyArea').classList.remove('hidden');
+  document.getElementById('duelReadyText').textContent = playerNum === 1
+    ? "Spelare 1 — gör dig redo! 8 frågor, så fort och rätt du kan."
+    : `Nu är det ${duelPlayerName2}s tur — samma frågor. Redo?`;
+}
+
+function duelBeginPlaying(){
+  document.getElementById('duelReadyArea').classList.add('hidden');
+  document.getElementById('duelPlayArea').classList.remove('hidden');
+  duelIndex = 0; duelCorrect = 0;
+  duelStartTime = performance.now();
+  renderDuelQuestion();
+}
+
+function renderDuelQuestion(){
+  if(duelIndex >= duelQuestions.length){ finishDuelPlayer(); return; }
+  duelAnswered = false;
+  document.getElementById('duelPlayerLabel').textContent = duelStage === 1 ? 'Spelare 1' : duelPlayerName2;
+  const q = duelQuestions[duelIndex];
+  document.getElementById('duelQLabel').textContent = `${q.label} (${duelIndex+1}/${duelQuestions.length})`;
+  document.getElementById('duelQText').textContent = q.prompt;
+  const opts = document.getElementById('duelOptions');
+  opts.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = ()=>duelSelect(btn, i, q.correctIdx);
+    opts.appendChild(btn);
+  });
+}
+
+function duelSelect(btn, idx, correctIdx){
+  if(duelAnswered) return;
+  duelAnswered = true;
+  const allBtns = document.querySelectorAll('#duelOptions .opt-btn');
+  allBtns.forEach((b,i)=>{
+    if(i === correctIdx) b.classList.add('correct');
+    b.disabled = true;
+  });
+  if(idx === correctIdx){
+    duelCorrect++;
+    playTone(880, 0.08, 'sine', 0, 0.1);
+  } else {
+    btn.classList.add('wrong');
+    playSweep(260,140,0.18,'sine',0,0.08);
+  }
+  setTimeout(()=>{ duelIndex++; renderDuelQuestion(); }, 600);
+}
+
+function finishDuelPlayer(){
+  const timeMs = performance.now() - duelStartTime;
+  const result = {correct: duelCorrect, total: duelQuestions.length, timeMs};
+  document.getElementById('duelPlayArea').classList.add('hidden');
+  if(duelStage === 1){
+    duelP1 = result;
+    const name2 = (prompt("Namn på spelare 2?") || "Spelare 2").trim() || "Spelare 2";
+    duelPlayerName2 = name2.charAt(0).toUpperCase() + name2.slice(1);
+    showDuelReady(2);
+  } else {
+    duelP2 = result;
+    showDuelComparison();
+  }
+}
+
+function showDuelComparison(){
+  document.getElementById('duelResultArea2').classList.remove('hidden');
+  const p1Wins = duelP1.correct > duelP2.correct ||
+    (duelP1.correct === duelP2.correct && duelP1.timeMs <= duelP2.timeMs);
+  const fmt = (ms)=> (ms/1000).toFixed(1) + " sek";
+  document.getElementById('duelResultContent').innerHTML = `
+    <div class="big">🏆</div>
+    <h2>${p1Wins ? 'Spelare 1 vinner!' : duelPlayerName2 + ' vinner!'}</h2>
+    <div class="duel-result-row${p1Wins ? ' winner' : ''}">
+      <div><b>Spelare 1</b></div>
+      <div>${duelP1.correct}/${duelP1.total} rätt — ${fmt(duelP1.timeMs)}</div>
+    </div>
+    <div class="duel-result-row${!p1Wins ? ' winner' : ''}">
+      <div><b>${duelPlayerName2}</b></div>
+      <div>${duelP2.correct}/${duelP2.total} rätt — ${fmt(duelP2.timeMs)}</div>
+    </div>
+  `;
+}
+
+// ---------- DAILY CHALLENGE ----------
+function seedFromString(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h) || 1;
+}
+function seededRandomFn(seed){
+  let s = seed % 2147483647;
+  if(s <= 0) s += 2147483646;
+  return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+function seededShuffle(arr, seed){
+  const rand = seededRandomFn(seed);
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(rand() * (i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function generateDailyWords(){
+  const wordLevels = levels.filter(l=>l.type === "words");
+  const allWords = wordLevels.flatMap(l=>l.words);
+  const seed = seedFromString("daily-" + todayStr());
+  return seededShuffle(allWords, seed).slice(0, 5);
+}
+
+function renderDailyCard(){
+  const wrap = document.getElementById('dailyChallengeWrap');
+  if(!wrap) return;
+  const today = todayStr();
+  const done = levelScores && levelScores.dailyChallenge && levelScores.dailyChallenge.date === today;
+  const div = document.createElement('div');
+  wrap.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'daily-card' + (done ? ' done' : '');
+  if(!done) card.onclick = startDailyChallenge;
+  card.innerHTML = done
+    ? `<div class="icon">✅</div><div class="info"><div class="title">Dagens utmaning klar!</div><div class="sub">Kom tillbaka imorgon för en ny — och en ny bonus</div></div>`
+    : `<div class="icon">📅</div><div class="info"><div class="title">Dagens utmaning</div><div class="sub">5 blandade glosor — +100 Robux i bonus</div></div>`;
+  wrap.appendChild(card);
+}
+
+function startDailyChallenge(){
+  currentLevelId = 'daily';
+  currentLevelType = 'words';
+  currentWords = generateDailyWords();
+  order = currentWords.map((w,i)=>({idx:i, mode:'mc'}));
+  current = 0; score = 0; streak = 0;
+  document.getElementById('bodyEl').className = 'level-5';
+  document.getElementById('subtitle').textContent = "Dagens utmaning";
+  document.getElementById('homeArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.remove('hidden');
+  updateScore();
+  renderQuestion();
+}
+
+function finishDailyChallenge(){
+  const maxScore = order.length * 30;
+  const pct = score / maxScore;
+  const today = todayStr();
+  const already = levelScores.dailyChallenge && levelScores.dailyChallenge.date === today;
+  let bonus = 0;
+  if(!already){
+    bonus = 100;
+    score += bonus;
+    updateScore();
+    addWallet(bonus);
+    addSessionPoints(bonus);
+  }
+  levelScores.dailyChallenge = {date: today, done:true, score: score};
+  savePlayers();
+  if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
+  checkBadges();
+
+  let emoji, title, starCount;
+  if(pct >= 0.8){ emoji = "🏆📅"; title = "Dagens utmaning klar!"; starCount = 3; }
+  else if(pct >= 0.5){ emoji = "📅⭐"; title = "Bra kämpat idag!"; starCount = 2; }
+  else { emoji = "📅🛠️"; title = "Imorgon kör vi igen!"; starCount = 1; }
+  const text = already
+    ? `Du fick ${score} Robux den här omgången (ingen extra bonus — redan gjort idag).`
+    : `Du fick ${score} Robux, plus en bonus på ${bonus} Robux för dagens utmaning!`;
+
+  if(starCount === 3) spawnConfetti();
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultStars').textContent = "⭐".repeat(starCount) + "☆".repeat(3-starCount);
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartCurrentLevel(){
+  if(currentLevelId === 'daily') startDailyChallenge();
+  else startLevel(currentLevelId);
+}
+
 // ---------- MATH FACT GENERATION ----------
 function generateMathFacts(tables){
   let facts = [];
@@ -1121,6 +1772,7 @@ function renderQuestion(){
   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = 'feedback';
   document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('speakBtn').classList.add('hidden');
 
   const q = order[current];
   const mcArea = document.getElementById('mcArea');
@@ -1152,6 +1804,7 @@ function renderReadingPage(q){
 }
 
 function showReadingQuestion(){
+  document.getElementById('speakBtn').classList.add('hidden');
   const q = order[current];
   const page = currentReadingPages[q.idx];
   document.getElementById('storyArea').classList.add('hidden');
@@ -1182,6 +1835,9 @@ function selectReadingOption(btn, chosenIdx, correctIdx){
     score += bonus;
     updateScore();
     addSessionPoints(bonus);
+    addWallet(bonus);
+    playTone(880, 0.1, 'sine', 0, 0.1);
+    playTone(1320, 0.14, 'sine', 0.07, 0.09);
     fb.textContent = `✅ Rätt! +${bonus} Robux — nu kan du fortsätta läsa.`;
     fb.className = 'feedback ok';
     document.getElementById('nextBtn').classList.remove('hidden');
@@ -1189,6 +1845,7 @@ function selectReadingOption(btn, chosenIdx, correctIdx){
     readingAttemptWrong = true;
     btn.classList.add('wrong');
     btn.disabled = true;
+    playSweep(260, 140, 0.22, 'sine', 0, 0.1);
     fb.textContent = "❌ Nästan! Testa ett annat svar.";
     fb.className = 'feedback bad';
   }
@@ -1196,6 +1853,8 @@ function selectReadingOption(btn, chosenIdx, correctIdx){
 
 function renderWordQuestion(q, mcArea, typeArea){
   const w = currentWords[q.idx];
+  currentSpeakWord = w.en;
+  document.getElementById('speakBtn').classList.remove('hidden');
   if(q.mode === "mc" || q.mode === "mc_rev"){
     mcArea.classList.remove('hidden');
     let correctAnswer, pool;
@@ -1242,6 +1901,7 @@ function renderWordQuestion(q, mcArea, typeArea){
 }
 
 function renderMathQuestion(q, mcArea, typeArea){
+  document.getElementById('speakBtn').classList.add('hidden');
   const f = currentFacts[q.idx];
   document.getElementById('wordLabel').textContent = "Räkna ut:";
   document.getElementById('wordText').textContent = `${f.a} × ${f.b}`;
@@ -1307,6 +1967,9 @@ function onCorrect(){
   score += bonus;
   updateScore();
   addSessionPoints(bonus);
+  addWallet(bonus);
+  playTone(880, 0.1, 'sine', 0, 0.1);
+  playTone(1320, 0.14, 'sine', 0.07, 0.09);
   const fb = document.getElementById('feedback');
   fb.textContent = streak >= 3 ? `🔥 Rätt! +${bonus} Robux (streak x${streak}!)` : `✅ Rätt! +${bonus} Robux`;
   fb.className = 'feedback ok';
@@ -1315,6 +1978,7 @@ function onCorrect(){
 
 function onWrong(correctAnswer){
   streak = 0;
+  playSweep(260, 140, 0.22, 'sine', 0, 0.1);
   const fb = document.getElementById('feedback');
   fb.textContent = `❌ Rätt svar: ${correctAnswer}`;
   fb.className = 'feedback bad';
@@ -1333,6 +1997,11 @@ function finishLevel(){
   const resultArea = document.getElementById('resultArea');
   resultArea.classList.remove('hidden');
 
+  if(currentLevelId === 'daily'){
+    finishDailyChallenge();
+    return;
+  }
+
   const maxScore = order.length * 30;
   const pct = score / maxScore;
   const prev = levelScores[currentLevelId];
@@ -1341,6 +2010,7 @@ function finishLevel(){
   levelScores[currentLevelId] = {last: score, best: best, max: maxScore, plays: plays};
   savePlayers();
   if(window.fbSavePlayerScores) window.fbSavePlayerScores(currentUser, levelScores);
+  checkBadges();
 
   let emoji, title, text, starCount;
   if(pct >= 0.8){ emoji="🏆👑"; title="LEGENDARY WIN!"; starCount=3;
@@ -1350,10 +2020,26 @@ function finishLevel(){
   else { emoji="🔁🛠️"; title="Bygg vidare!"; starCount=1;
     text=`Du fick ${score} Robux. Öva lite till — sen klarar du nästa runda lätt!`; }
 
+  if(starCount === 3) spawnConfetti();
+
   document.getElementById('resultEmoji').textContent = emoji;
   document.getElementById('resultTitle').textContent = title;
   document.getElementById('resultStars').textContent = "⭐".repeat(starCount) + "☆".repeat(3-starCount);
   document.getElementById('resultText').textContent = text;
+}
+
+function spawnConfetti(){
+  const colors = ['#7cff00','#00e5ff','#ffd166','#ff6b81','#c26bff','#38bdf8'];
+  for(let i=0;i<40;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (1.8 + Math.random()*1.2) + 's';
+    el.style.animationDelay = (Math.random()*0.25) + 's';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 3600);
+  }
 }
 
 // ---------- SECRET 3D ROOM ----------
@@ -1381,15 +2067,22 @@ async function ensureThree(){
 
 let secretScene = null; // holds renderer/scene/camera/parts once built
 
-async function goSecretRoom(){
+async function goSecretRoom(roomNum){
+  roomNum = roomNum || 1;
   document.getElementById('nameArea').classList.add('hidden');
   document.getElementById('homeArea').classList.add('hidden');
   document.getElementById('quizArea').classList.add('hidden');
   document.getElementById('resultArea').classList.add('hidden');
   document.getElementById('leaderboardArea').classList.add('hidden');
   document.getElementById('adminArea').classList.add('hidden');
+  document.getElementById('shopArea').classList.add('hidden');
+  document.getElementById('badgesArea').classList.add('hidden');
+  document.getElementById('duelArea').classList.add('hidden');
   document.getElementById('secretArea').classList.remove('hidden');
-  document.getElementById('subtitle').textContent = "Hemliga rummet";
+  document.getElementById('subtitle').textContent = roomNum === 2 ? "Hemliga rummet 2" : "Hemliga rummet";
+  document.getElementById('secretHint').textContent = roomNum === 2
+    ? "En ny smak! Dra för att klämma och töja — släpp så vaggar den tillbaka!"
+    : "Dra i marshmallowen för att klämma och töja den — släpp så vaggar den tillbaka!";
   document.getElementById('bodyEl').className = '';
 
   const ok = await ensureThree();
@@ -1397,7 +2090,7 @@ async function goSecretRoom(){
     document.getElementById('secretCanvasWrap').innerHTML = '<div class="empty-msg">Kunde inte ladda 3D just nu. Testa igen om en stund!</div>';
     return;
   }
-  initSecretScene();
+  initSecretScene(roomNum);
 }
 
 function playTone(freq, duration, type, delay, gainAmt){
@@ -1441,7 +2134,14 @@ function playSweep(f1, f2, duration, type, delay, gainAmt){
   }catch(e){ /* audio unavailable, ignore */ }
 }
 
-function initSecretScene(){
+function initSecretScene(roomNum){
+  roomNum = roomNum || 1;
+  const PALETTES = {
+    1: {bun: 0xe3c9a0, floor: 0xd9c6a3, wall: 0xe7d6de, wallLight: 0xffc9e3},
+    2: {bun: 0xf6b8c6, floor: 0xcfe8e3, wall: 0xdbeee9, wallLight: 0x9be8ff}
+  };
+  const palette = PALETTES[roomNum] || PALETTES[1];
+
   const wrap = document.getElementById('secretCanvasWrap');
 
   // Rebuild fresh each time.
@@ -1472,7 +2172,7 @@ function initSecretScene(){
   dl.shadow.camera.top = 4; dl.shadow.camera.bottom = -4;
   dl.shadow.bias = -0.002;
   scene.add(dl);
-  const dl2 = new THREE.DirectionalLight(0xffc9e3, 0.3);
+  const dl2 = new THREE.DirectionalLight(palette.wallLight, 0.3);
   dl2.position.set(-3, -1, -4);
   scene.add(dl2);
 
@@ -1480,7 +2180,7 @@ function initSecretScene(){
   const FLOOR_Y = -1.15;
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(9, 9),
-    new THREE.MeshStandardMaterial({color: 0xd9c6a3, roughness: 0.95})
+    new THREE.MeshStandardMaterial({color: palette.floor, roughness: 0.95})
   );
   floor.rotation.x = -Math.PI/2;
   floor.position.y = FLOOR_Y;
@@ -1489,7 +2189,7 @@ function initSecretScene(){
 
   const backWall = new THREE.Mesh(
     new THREE.PlaneGeometry(9, 6),
-    new THREE.MeshStandardMaterial({color: 0xe7d6de, roughness: 1})
+    new THREE.MeshStandardMaterial({color: palette.wall, roughness: 1})
   );
   backWall.position.set(0, FLOOR_Y + 3, -2.6);
   backWall.receiveShadow = true;
@@ -1498,7 +2198,7 @@ function initSecretScene(){
   // ---- Squishy bao-bun mesh ----
   const geo = new THREE.SphereGeometry(1.35, 48, 32);
   const mat = new THREE.MeshStandardMaterial({
-    color: 0xe3c9a0, roughness: 0.82, metalness: 0.0,
+    color: palette.bun, roughness: 0.82, metalness: 0.0,
     emissive: 0x3a2410, emissiveIntensity: 0.05
   });
   const mesh = new THREE.Mesh(geo, mat);
