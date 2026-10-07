@@ -13,6 +13,7 @@
          (5 mixed glosor, +100 bonus, once per day), standalone 2-player Duel mode, and English text-to-speech (🔊).
   v1.3 — 2026-10-04 — New level: Nivå 6, the 3, 6 and 9 times tables. The "Mattegeni" badge now also counts it.
   v1.4 — 2026-10-07 — New level: Nivå 7 (v41 glosor) — kroppsdelar och gammal/ung.
+  v1.5 — 2026-10-07 — New level: Nivå 8, blandad gångning (alla tabeller 2-10 blandat).
 -->
 <style>
   :root{
@@ -30,6 +31,7 @@
   body.level-5{ --accent:#38bdf8; --accent2:#f472b6; }
   body.level-6{ --accent:#a3e635; --accent2:#fb923c; }
   body.level-7{ --accent:#fb7185; --accent2:#60a5fa; }
+  body.level-8{ --accent:#facc15; --accent2:#8b5cf6; }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
@@ -611,7 +613,7 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.4</div>
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.5</div>
   <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
@@ -738,6 +740,11 @@ const levels = [
     id: 6, type:"math", name: "Nivå 6: Gångertabellen 2", meta: "3:an, 6:an och 9:ans tabell",
     icon: "➗", themeClass: "level-6",
     tables: [3,6,9]
+  },
+  {
+    id: 8, type:"math", name: "Nivå 8: Blandad gångning", meta: "Alla tabeller blandat, 2:an-10:an",
+    icon: "🎲", themeClass: "level-8",
+    tables: [2,3,4,5,6,7,8,9,10]
   },
   {
     id: 4, type:"reading", name: "Nivå 4: Läs-äventyret", meta: "En spännande Roblox-historia",
@@ -1421,7 +1428,7 @@ const BADGES = [
   {id:'bookworm', emoji:'📚', name:'Bokmask', desc:'Klara hela läs-äventyret',
     test:(p)=>p[4] && p[4].plays >= 1},
   {id:'math_whiz', emoji:'🧮', name:'Mattegeni', desc:'Full poäng på en gångertabell',
-    test:(p)=>[3,6].some(id=>p[id] && p[id].max && p[id].best >= p[id].max)}
+    test:(p)=>[3,6,8].some(id=>p[id] && p[id].max && p[id].best >= p[id].max)}
 ];
 
 function checkBadges(){
