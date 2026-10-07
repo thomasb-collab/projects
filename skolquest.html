@@ -12,6 +12,7 @@
          a second palette-swapped secret room (unlocks at 1000 lifetime Robux), 3-star confetti, a Daily Challenge
          (5 mixed glosor, +100 bonus, once per day), standalone 2-player Duel mode, and English text-to-speech (🔊).
   v1.3 — 2026-10-04 — New level: Nivå 6, the 3, 6 and 9 times tables. The "Mattegeni" badge now also counts it.
+  v1.4 — 2026-10-07 — New level: Nivå 7 (v41 glosor) — kroppsdelar och gammal/ung.
 -->
 <style>
   :root{
@@ -28,6 +29,7 @@
   body.level-4{ --accent:#2dd4bf; --accent2:#fbbf24; }
   body.level-5{ --accent:#38bdf8; --accent2:#f472b6; }
   body.level-6{ --accent:#a3e635; --accent2:#fb923c; }
+  body.level-7{ --accent:#fb7185; --accent2:#60a5fa; }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
@@ -609,7 +611,7 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.3</div>
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.4</div>
   <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
@@ -715,6 +717,16 @@ const levels = [
       {en:"pupil", sv:["elev"]}, {en:"teacher", sv:["lärare"]}, {en:"classroom", sv:["klassrum"]},
       {en:"table", sv:["bord"]}, {en:"desk", sv:["skolbänk"]}, {en:"classmate", sv:["klasskompis"]},
       {en:"rubber", sv:["suddgummi"]}
+    ]
+  },
+  {
+    id: 7, type:"words", name: "Nivå 7: v41", meta: "mun, ben, mage, näsa, arm, fot, öga, huvud, öra, hand, gammal, ung",
+    icon: "🙆", themeClass: "level-7",
+    words: [
+      {en:"mouth", sv:["mun"]}, {en:"leg", sv:["ben"]}, {en:"stomach", sv:["mage"]},
+      {en:"nose", sv:["näsa"]}, {en:"arm", sv:["arm"]}, {en:"foot", sv:["fot"]},
+      {en:"eye", sv:["öga"]}, {en:"head", sv:["huvud"]}, {en:"ear", sv:["öra"]},
+      {en:"hand", sv:["hand"]}, {en:"old", sv:["gammal"]}, {en:"young", sv:["ung"]}
     ]
   },
   {
