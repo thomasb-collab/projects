@@ -14,6 +14,7 @@
   v1.3 — 2026-10-04 — New level: Nivå 6, the 3, 6 and 9 times tables. The "Mattegeni" badge now also counts it.
   v1.4 — 2026-10-07 — New level: Nivå 7 (v41 glosor) — kroppsdelar och gammal/ung.
   v1.5 — 2026-10-07 — New level: Nivå 8, blandad gångning (alla tabeller 2-10 blandat).
+  v1.6 — 2026-10-12 — New "Geografi" section: Nivå 9, begrepp inför provet 16/10 (jordglob, kompass, latitud, ekvatorn...).
 -->
 <style>
   :root{
@@ -32,6 +33,7 @@
   body.level-6{ --accent:#a3e635; --accent2:#fb923c; }
   body.level-7{ --accent:#fb7185; --accent2:#60a5fa; }
   body.level-8{ --accent:#facc15; --accent2:#8b5cf6; }
+  body.level-9{ --accent:#34d399; --accent2:#f59e0b; }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
@@ -464,6 +466,8 @@
       <div class="levels" id="levelListWords"></div>
       <div class="section-lbl">Matte</div>
       <div class="levels" id="levelListMath"></div>
+      <div class="section-lbl">Geografi</div>
+      <div class="levels" id="levelListConcepts"></div>
       <div class="section-lbl">Läsäventyr</div>
       <div class="levels" id="levelListReading"></div>
       <div id="secretTeaserWrap"></div>
@@ -613,7 +617,7 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.5</div>
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.6</div>
   <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
@@ -747,6 +751,25 @@ const levels = [
     tables: [2,3,4,5,6,7,8,9,10]
   },
   {
+    id: 9, type:"concepts", name: "Nivå 9: Geografi (prov 16/10)", meta: "jordglob, kompass, latitud, ekvatorn...",
+    icon: "🗺️", themeClass: "level-9",
+    items: [
+      {term:"jordglob", emoji:"🌍", def:"rund modell av jorden som går att snurra"},
+      {term:"satellit", emoji:"🛰️", def:"föremål som åker runt jorden i en bana"},
+      {term:"poler", alt:["polerna"], emoji:"🧊", def:"jordklotets nordligaste och sydligaste punkter"},
+      {term:"GPS", emoji:"📍", def:"system som använder satelliter för att tala om vart du är"},
+      {term:"skalstreck", emoji:"📏", def:"linje som visar hur långt ett avstånd på kartan är i verkligheten"},
+      {term:"kompass", emoji:"🧭", def:"verktyg som visar väderstreck"},
+      {term:"väderstreck", alt:["väderstrecken"], emoji:"⬆️", def:"det håll åt vilket något ligger: norr, öster, söder, väster"},
+      {term:"kompassros", emoji:"✴️", def:"symbol/bild som visar riktningen för väderstrecken"},
+      {term:"karttecken", alt:["karttecknen"], emoji:"🚏", def:"symboler på karta för exempelvis skidspår, väg, vattendrag"},
+      {term:"höjdkurvor", alt:["höjdkurva"], emoji:"⛰️", def:"ritas med ringar på kartan för att visa höjdskillnader"},
+      {term:"latitud", alt:["breddgrad"], emoji:"↔️", def:"streck på kartan som går runt jorden på bredden"},
+      {term:"longitud", alt:["längdgrad"], emoji:"↕️", def:"streck på kartan som går från nordpol till sydpol"},
+      {term:"ekvatorn", alt:["ekvator"], emoji:"🌐", def:"en tänkt linje (0° breddgrad) runt jorden på lika stort avstånd från båda polerna, som delar planeten i det norra och södra halvklotet"}
+    ]
+  },
+  {
     id: 4, type:"reading", name: "Nivå 4: Läs-äventyret", meta: "En spännande Roblox-historia",
     icon: "📚", themeClass: "level-4",
     pages: [
@@ -846,6 +869,7 @@ let currentWords = [];
 let currentReadingPages = [];
 let readingAttemptWrong = false;
 let currentLevelType = "words";
+let currentConcepts = [];
 let currentSpeakWord = "";
 
 function speakEnglish(word){
@@ -1128,9 +1152,11 @@ function renderHome(){
   const wordList = document.getElementById('levelListWords');
   const mathList = document.getElementById('levelListMath');
   const readingList = document.getElementById('levelListReading');
+  const conceptList = document.getElementById('levelListConcepts');
   wordList.innerHTML = '';
   mathList.innerHTML = '';
   readingList.innerHTML = '';
+  conceptList.innerHTML = '';
 
   levels.forEach(lvl=>{
     const s = levelScores[lvl.id];
@@ -1146,7 +1172,7 @@ function renderHome(){
       </div>
       <div class="score">${s ? s.last + ' 🪙' : 'Ny!'}</div>
     `;
-    const target = lvl.type === "math" ? mathList : (lvl.type === "reading" ? readingList : wordList);
+    const target = lvl.type === "math" ? mathList : (lvl.type === "reading" ? readingList : (lvl.type === "concepts" ? conceptList : wordList));
     target.appendChild(div);
   });
   document.getElementById('totalScore').textContent = total;
@@ -1543,6 +1569,13 @@ function buildDuelQuestions(lvl){
       return {label:'Räkna ut:', prompt:`${f.a} × ${f.b}`, options:opts, correctIdx: opts.indexOf(String(correct))};
     });
   }
+  if(lvl.type === 'concepts'){
+    return shuffle(lvl.items).slice(0,8).map(c=>{
+      const distractors = shuffle(lvl.items.map(x=>x.term).filter(x=>x!==c.term)).slice(0,3);
+      const opts = shuffle([c.term, ...distractors]);
+      return {label:'Vilket begrepp är det här?', prompt:`${c.emoji} ${c.def}`, options:opts, correctIdx: opts.indexOf(c.term)};
+    });
+  }
   return shuffle(lvl.words).slice(0,8).map(w=>{
     const correct = w.sv[0];
     const pool = lvl.words.map(x=>x.sv[0]).filter(x=>x!==correct);
@@ -1772,6 +1805,13 @@ function startLevel(levelId){
   } else if(lvl.type === "reading"){
     currentReadingPages = lvl.pages;
     order = currentReadingPages.map((p,i)=>({idx:i}));
+  } else if(lvl.type === "concepts"){
+    currentConcepts = lvl.items;
+    order = shuffle(currentConcepts.map((c,i)=>i)).map(idx=>{
+      const r = Math.random();
+      let mode = r < 0.45 ? "mc" : (r < 0.65 ? "mc_rev" : "type");
+      return {idx, mode};
+    });
   } else {
     currentFacts = generateMathFacts(lvl.tables);
     order = currentFacts.map((f,i)=>({idx:i, mode: Math.random() < 0.55 ? "mc" : "type"}));
@@ -1816,6 +1856,8 @@ function renderQuestion(){
   } else if(currentLevelType === "reading"){
     wordBox.classList.add('hidden');
     renderReadingPage(q);
+  } else if(currentLevelType === "concepts"){
+    renderConceptQuestion(q, mcArea, typeArea);
   } else {
     renderWordQuestion(q, mcArea, typeArea);
   }
@@ -1921,6 +1963,45 @@ function renderWordQuestion(q, mcArea, typeArea){
       input.dataset.answers = JSON.stringify([w.en]);
       input.dataset.display = w.en;
     }
+    setTimeout(()=>input.focus(), 50);
+    input.onkeydown = (e)=>{ if(e.key==='Enter') checkTyped(); };
+  }
+}
+
+function renderConceptQuestion(q, mcArea, typeArea){
+  document.getElementById('speakBtn').classList.add('hidden');
+  const c = currentConcepts[q.idx];
+  if(q.mode === "mc" || q.mode === "mc_rev"){
+    mcArea.classList.remove('hidden');
+    let correctAnswer, pool;
+    if(q.mode === "mc"){
+      document.getElementById('wordLabel').textContent = "Vilket begrepp är det här?";
+      document.getElementById('wordText').textContent = `${c.emoji} ${c.def}`;
+      correctAnswer = c.term;
+      pool = currentConcepts.map(x=>x.term).filter(x=>x!==correctAnswer);
+    } else {
+      document.getElementById('wordLabel').textContent = "Vad betyder begreppet?";
+      document.getElementById('wordText').textContent = `${c.emoji} ${c.term}`;
+      correctAnswer = c.def;
+      pool = currentConcepts.map(x=>x.def).filter(x=>x!==correctAnswer);
+    }
+    const options = shuffle([correctAnswer, ...shuffle(pool).slice(0,3)]);
+    options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = ()=>selectOption(btn, opt, correctAnswer);
+      mcArea.appendChild(btn);
+    });
+  } else {
+    typeArea.classList.remove('hidden');
+    document.getElementById('wordLabel').textContent = "Skriv begreppet:";
+    document.getElementById('wordText').textContent = `${c.emoji} ${c.def}`;
+    const input = document.getElementById('typeInput');
+    input.value = ''; input.disabled = false;
+    input.inputMode = 'text';
+    input.dataset.answers = JSON.stringify([c.term, ...(c.alt || [])]);
+    input.dataset.display = c.term;
     setTimeout(()=>input.focus(), 50);
     input.onkeydown = (e)=>{ if(e.key==='Enter') checkTyped(); };
   }
