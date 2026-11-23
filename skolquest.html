@@ -16,6 +16,7 @@
   v1.5 — 2026-10-07 — New level: Nivå 8, blandad gångning (alla tabeller 2-10 blandat).
   v1.6 — 2026-10-12 — New "Geografi" section: Nivå 9, begrepp inför provet 16/10 (jordglob, kompass, latitud, ekvatorn...).
   v1.7 — 2026-11-23 — Nivå 10: Shopping in London, 13 nya engelska glosor.
+  v1.8 — 2026-11-23 — Nivå 11: Bläckfiskens hemlighet, svensk läsförståelse med egna svar och ledtrådar.
 -->
 <style>
   :root{
@@ -36,6 +37,7 @@
   body.level-8{ --accent:#facc15; --accent2:#8b5cf6; }
   body.level-9{ --accent:#34d399; --accent2:#f59e0b; }
   body.level-10{ --accent:#f472b6; --accent2:#facc15; }
+  body.level-11{ --accent:#38bdf8; --accent2:#2dd4bf; }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
@@ -619,7 +621,7 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.7</div>
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.8</div>
   <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
@@ -788,6 +790,70 @@ const levels = [
       {term:"latitud", alt:["breddgrad"], emoji:"↔️", def:"streck på kartan som går runt jorden på bredden"},
       {term:"longitud", alt:["längdgrad"], emoji:"↕️", def:"streck på kartan som går från nordpol till sydpol"},
       {term:"ekvatorn", alt:["ekvator"], emoji:"🌐", def:"en tänkt linje (0° breddgrad) runt jorden på lika stort avstånd från båda polerna, som delar planeten i det norra och södra halvklotet"}
+    ]
+  },
+  {
+    "id": 11,
+    "type": "reading",
+    "name": "Nivå 11: Bläckfiskens hemlighet",
+    "meta": "Svenska åk 4 – läs och svara med egna ord",
+    "icon": "🐙",
+    "themeClass": "level-11",
+    "pages": [
+      {
+        "text": "Bläckfisken är ett av havets mest fascinerande och intelligenta djur. Det finns omkring 300 olika arter av bläckfiskar, och de lever i världens alla hav. Eftersom bläckfisken saknar ett hårt skelett är dess kropp helt mjuk. Det gör att den kan pressa sig igenom pyttesmå springor mellan stenar och koraller för att gömma sig från fiender som hajar och sälar.",
+        "question": "Varför kan bläckfisken pressa sig igenom väldigt små springor?",
+        "options": [
+          "Den saknar ett hårt skelett och har en mjuk kropp",
+          "Den har tre hjärtan",
+          "Den kan spruta bläck",
+          "Den simmar väldigt fort"
+        ],
+        "correct": 0
+      },
+      {
+        "text": "För att skydda sig använder bläckfisken flera smarta knep. Den är en mästare på kamouflage och kan ändra både färg och mönster på huden på mindre än en sekund. På så sätt smälter den in mot havsbotten så att rovdjuren inte ser den. Om en fiende ändå kommer för nära kan bläckfisken spruta ut ett mörkt moln av bläck i vattnet. Bläcket gör att fienden tappar sikten, och under tiden simmar bläckfisken snabbt iväg med hjälp av jetdrift genom att spruta ut vatten ur kroppen.",
+        "question": "Varför är det bra att bläckfisken kan ändra färg på mindre än en sekund?",
+        "open": true,
+        "hint": "Fundera på vad som händer om ett rovdjur plötsligt kommer nära.",
+        "example": "Den kan snabbt kamouflera sig och gömma sig från fiender så att de inte upptäcker den."
+      },
+      {
+        "text": "Bläckfiskar har också en mycket speciell kropp. De har åtta armar med hundratals sugkoppar som de använder för att känna, smaka och hålla fast byten som krabbor och musslor. Dessutom har en bläckfisk tre hjärtan och blått blod. Två av hjärtana pumpar blod till gälarna så att bläckfisken kan andas under vattnet, medan det tredje hjärtat pumpar blod till resten av kroppen.",
+        "question": "Vad äter bläckfisken enligt texten?",
+        "options": [
+          "Hajar och sälar",
+          "Krabbor och musslor",
+          "Stenar och koraller",
+          "Sjögräs"
+        ],
+        "correct": 1
+      },
+      {
+        "text": "Bläckfiskar har också en mycket speciell kropp. De har åtta armar med hundratals sugkoppar som de använder för att känna, smaka och hålla fast byten som krabbor och musslor. Dessutom har en bläckfisk tre hjärtan och blått blod. Två av hjärtana pumpar blod till gälarna så att bläckfisken kan andas under vattnet, medan det tredje hjärtat pumpar blod till resten av kroppen.",
+        "question": "Hur många hjärtan har bläckfisken och vilken färg har blodet?",
+        "options": [
+          "Tre hjärtan och blått blod",
+          "Två hjärtan och rött blod",
+          "Ett hjärta och blått blod",
+          "Tre hjärtan och grönt blod"
+        ],
+        "correct": 0
+      },
+      {
+        "text": "Bläckfiskar har också en mycket speciell kropp. De har åtta armar med hundratals sugkoppar som de använder för att känna, smaka och hålla fast byten som krabbor och musslor. Dessutom har en bläckfisk tre hjärtan och blått blod. Två av hjärtana pumpar blod till gälarna så att bläckfisken kan andas under vattnet, medan det tredje hjärtat pumpar blod till resten av kroppen.",
+        "question": "Hur hänger bläckfiskens sugkoppar ihop med hur den skaffar mat?",
+        "open": true,
+        "hint": "Vad gör den med sina sugkoppar när den hittar en krabba eller mussla?",
+        "example": "Den använder sugkopparna för att känna, smaka och hålla fast sina byten, till exempel krabbor och musslor."
+      },
+      {
+        "text": "För att skydda sig använder bläckfisken flera smarta knep. Den är en mästare på kamouflage och kan ändra både färg och mönster på huden på mindre än en sekund. På så sätt smälter den in mot havsbotten så att rovdjuren inte ser den. Om en fiende ändå kommer för nära kan bläckfisken spruta ut ett mörkt moln av bläck i vattnet. Bläcket gör att fienden tappar sikten, och under tiden simmar bläckfisken snabbt iväg med hjälp av jetdrift genom att spruta ut vatten ur kroppen.",
+        "question": "Förklara med egna ord vad kamouflage och byten betyder i texten.",
+        "open": true,
+        "hint": "Kamouflage hjälper den att inte synas. Byten är det den fångar för att äta.",
+        "example": "Kamouflage betyder att bläckfisken smälter in i omgivningen så att den inte syns. Byten är djur som bläckfisken fångar och äter."
+      }
     ]
   },
   {
@@ -1905,6 +1971,13 @@ function showReadingQuestion(){
   const mcArea = document.getElementById('mcArea');
   mcArea.classList.remove('hidden');
   mcArea.innerHTML = '';
+  if(page.open){
+    mcArea.classList.add('hidden');
+    const area = document.getElementById('typeArea');
+    area.classList.remove('hidden');
+    area.innerHTML = '<div style="font-size:0.85em;opacity:0.8;margin-bottom:8px">Svara med en hel mening. Du får sedan jämföra med ett exempel.</div><textarea id="readingOwnAnswer" rows="4" style="width:100%;padding:12px;border-radius:10px;font:inherit" placeholder="Skriv ditt eget svar här..."></textarea><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="go-btn" onclick="showReadingHint()">💡 Ledtråd</button><button class="go-btn" onclick="checkReadingOwnAnswer()">Visa exempelsvar ➡️</button></div><div id="readingHint" class="hidden" style="margin-top:10px"></div>';
+    return;
+  }
   const opts = page.options.map((opt,i)=>({opt,i}));
   shuffle(opts).forEach(o=>{
     const btn = document.createElement('button');
@@ -1915,6 +1988,31 @@ function showReadingQuestion(){
   });
 }
 
+function showReadingHint(){
+  const page = currentReadingPages[order[current].idx];
+  const el = document.getElementById('readingHint');
+  el.textContent = '💡 ' + page.hint;
+  el.classList.remove('hidden');
+}
+function checkReadingOwnAnswer(){
+  const page = currentReadingPages[order[current].idx];
+  const answer = document.getElementById('readingOwnAnswer').value.trim();
+  const fb = document.getElementById('feedback');
+  if(answer.length < 12){
+    fb.textContent = '✍️ Skriv först ett eget svar med minst några ord.';
+    fb.className = 'feedback bad';
+    return;
+  }
+  document.getElementById('typeArea').classList.add('hidden');
+  fb.textContent = '📖 Exempel: ' + page.example + ' Jämför med ditt svar. Bra att du formulerade dig själv! +30 Robux';
+  fb.className = 'feedback ok';
+  score += 30;
+  updateScore();
+  addSessionPoints(30);
+  addWallet(30);
+  playTone(880,0.1,'sine',0,0.1);
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
 function selectReadingOption(btn, chosenIdx, correctIdx){
   const fb = document.getElementById('feedback');
   if(chosenIdx === correctIdx){
