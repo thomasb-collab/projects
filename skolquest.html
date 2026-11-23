@@ -15,6 +15,7 @@
   v1.4 — 2026-10-07 — New level: Nivå 7 (v41 glosor) — kroppsdelar och gammal/ung.
   v1.5 — 2026-10-07 — New level: Nivå 8, blandad gångning (alla tabeller 2-10 blandat).
   v1.6 — 2026-10-12 — New "Geografi" section: Nivå 9, begrepp inför provet 16/10 (jordglob, kompass, latitud, ekvatorn...).
+  v1.7 — 2026-11-23 — Nivå 10: Shopping in London, 13 nya engelska glosor.
 -->
 <style>
   :root{
@@ -34,6 +35,7 @@
   body.level-7{ --accent:#fb7185; --accent2:#60a5fa; }
   body.level-8{ --accent:#facc15; --accent2:#8b5cf6; }
   body.level-9{ --accent:#34d399; --accent2:#f59e0b; }
+  body.level-10{ --accent:#f472b6; --accent2:#facc15; }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
@@ -617,7 +619,7 @@
 
   </div>
   <div class="noggin">Baserat på forskning om spaced retrieval &amp; aktiv återkallning (testing effect) — kortare, roliga övningspass ger bättre inlärning än att bara läsa listan.</div>
-  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.6</div>
+  <div style="text-align:center; margin-top:8px; opacity:0.3; font-size:0.7em;">v1.7</div>
   <div style="text-align:center; margin-top:4px;">
     <button onclick="openAdminPrompt()" style="background:none; border:none; color:inherit; opacity:0.25; font-size:0.75em; cursor:pointer; padding:6px;">⚙ admin</button>
   </div>
@@ -733,6 +735,25 @@ const levels = [
       {en:"nose", sv:["näsa"]}, {en:"arm", sv:["arm"]}, {en:"foot", sv:["fot"]},
       {en:"eye", sv:["öga"]}, {en:"head", sv:["huvud"]}, {en:"ear", sv:["öra"]},
       {en:"hand", sv:["hand"]}, {en:"old", sv:["gammal"]}, {en:"young", sv:["ung"]}
+    ]
+  },
+  {
+    id: 10, type:"words", name: "Nivå 10: Shopping in London", meta: "kreditkort, berömd, varuhus, marknad...",
+    icon: "🛍️", themeClass: "level-10",
+    words: [
+      {en:"credit card", sv:["kreditkort"]},
+      {en:"famous", sv:["berömd"]},
+      {en:"department store", sv:["varuhus"]},
+      {en:"expensive", sv:["dyr"]},
+      {en:"sportswear", sv:["idrottskläder"]},
+      {en:"department", sv:["avdelning"]},
+      {en:"fashion shop", sv:["modeaffär"]},
+      {en:"record", sv:["skiva"]},
+      {en:"most things", sv:["de flesta saker"]},
+      {en:"market", sv:["marknad"]},
+      {en:"cheap", sv:["billig"]},
+      {en:"leather goods", sv:["lädervaror"]},
+      {en:"handmade jewellery", sv:["handgjorda smycken"]}
     ]
   },
   {
